@@ -192,6 +192,8 @@
 
 <div class="hint">drag = orbit · scroll = zoom · space = play/pause · click 🌍 Earth = surface view</div>
 
+<div id="dbg" style="position:fixed;left:8px;bottom:4px;z-index:30;font:11px ui-monospace,monospace;color:#5fe3ff;text-shadow:0 1px 3px #000;pointer-events:none;opacity:.9">v4</div>
+
 <div id="surface">
   <canvas id="surfaceCanvas"></canvas>
   <div id="surfaceInfo"><div class="k" id="sKind">—</div><div class="c" id="sCov">—</div></div>
@@ -684,6 +686,11 @@ function tick(now){
   drawDiagram(e,b);
   renderReadout(e,b);
   if(surfaceActive) drawSurface();
+  // diagnostic readout (temporary): viewport, camera elevation, and where the Sun projects on screen
+  { const sp=_v.set(0,0,0).project(camera); const sx2=(sp.x*0.5+0.5), sy2=(-sp.y*0.5+0.5);
+    const elv=Math.round(Math.asin(camera.position.y/camera.position.length())*180/Math.PI);
+    document.getElementById('dbg').textContent =
+      `v4 · ${innerWidth}×${innerHeight} · el${elv}° · sun ${(sx2*100|0)},${(sy2*100|0)}`; }
   requestAnimationFrame(tick);
 }
 
