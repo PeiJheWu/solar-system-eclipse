@@ -69,20 +69,19 @@
   #forecast h2 .tag{color:var(--eclipse);font-weight:600;letter-spacing:.5px}
   .ev{display:flex;align-items:center;gap:11px;padding:8px 0;border-top:1px solid rgba(255,255,255,.06)}
   .ev:first-of-type{border-top:none}
-  .ev .ico{width:26px;height:26px;border-radius:50%;flex:none;position:relative;
-    background:radial-gradient(circle at 50% 50%,#1a1a22 58%,#3a3a48);border:1px solid #333}
-  .ev .ico::after{content:"";position:absolute;inset:-1px;border-radius:50%;
-    box-shadow:0 0 9px 1px rgba(255,170,90,.6);
-    background:radial-gradient(circle at 50% 50%, transparent 52%, rgba(255,200,120,.9) 54%, transparent 70%)}
-  .ev.total .ico::after{box-shadow:0 0 14px 2px rgba(255,255,255,.95)}
+  .ev .ico{width:24px;height:24px;flex:none;display:flex;align-items:center;justify-content:center;
+    font-size:14px;line-height:1;filter:drop-shadow(0 0 5px rgba(255,180,90,.5))}
+  .ev .ico.lunar{filter:drop-shadow(0 0 5px rgba(255,120,90,.55))}
   .ev .meta{flex:1;min-width:0}
   .ev .meta .d{font-family:var(--mono);font-size:13px}
-  .ev .meta .t{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:1px}
+  .ev .meta .t{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:1px;text-transform:capitalize}
   .ev .cd{font-family:var(--mono);font-size:11px;color:var(--cyan);text-align:right;white-space:nowrap}
   .badge{font-size:9px;text-transform:uppercase;letter-spacing:.6px;padding:2px 6px;border-radius:6px}
   .badge.Total{background:rgba(255,255,255,.14);color:#fff}
   .badge.Annular{background:rgba(255,200,120,.16);color:var(--amber)}
   .badge.Partial{background:rgba(95,227,255,.14);color:var(--cyan)}
+  .badge.Hybrid{background:rgba(190,130,255,.18);color:#c9a6ff}
+  .badge.Penumbral{background:rgba(150,160,185,.16);color:#aeb8d0}
 
   #diagwrap{right:24px;bottom:24px;width:276px;padding:14px 16px 12px}
   #diagram{width:100%;height:128px;display:block}
@@ -227,6 +226,9 @@ const G = 2.9591220828e-4;                  // AU³ /(M☉·day²)
 const MOON_A = 0.00257, MOON_M = 3.694e-8, MOON_INCL = 5.145*D2R;
 const NB = 10;
 const compress = rho => 7 + 12*Math.pow(rho, 0.45);   // AU → scene-unit display radius
+const R2D = 180/Math.PI;
+const SUN_AU=0.0046491, MOON_RAD_AU=1.16138e-5, EARTH_AU=4.2635e-5, PARALLAX=0.95; // physical radii (AU); topocentric Moon shift (deg)
+const fold180 = d => { d=((d%360)+360)%360; return d>180? d-360 : d; };
 
 function makeState(){
   const S={x:new Float64Array(NB),y:new Float64Array(NB),z:new Float64Array(NB),
@@ -279,18 +281,45 @@ function geom(S){                             // Sun/Moon geometry as seen from 
            lat:Math.asin(Math.max(-1,Math.min(1,mz)))*180/Math.PI }; // Moon ecliptic latitude
 }
 
+// All eclipse-relevant angles (deg) from the live N-body distances
+function angles(S){
+  const g=geom(S), e=3;
+  const dES=Math.hypot(S.x[0]-S.x[e],S.y[0]-S.y[e],S.z[0]-S.z[e]);
+  const dEM=Math.hypot(S.x[9]-S.x[e],S.y[9]-S.y[e],S.z[9]-S.z[e]);
+  return { elong:g.elong, lat:g.lat, dlon:fold180(g.elong-180), dES, dEM,
+    Rs:Math.atan(SUN_AU/dES)*R2D,                                 // Sun apparent radius
+    Rm:Math.atan(MOON_RAD_AU/dEM)*R2D,                            // Moon apparent radius (varies → total vs annular)
+    umbra:(EARTH_AU/dEM-(SUN_AU-EARTH_AU)/dES)*R2D*1.02,          // Earth umbra radius at Moon
+    pen  :(EARTH_AU/dEM+(SUN_AU-EARTH_AU)/dES)*R2D*1.02 };        // Earth penumbra radius at Moon
+}
+// Type of solar eclipse at a new moon (null if none). Hybrid = total/annular along the path.
+function solarType(a){
+  if(Math.abs(a.lat) >= ECLIPSE_LIMIT) return null;
+  if(Math.abs(a.lat) > 0.99) return "Partial";                    // shadow axis misses Earth
+  const d=a.Rm-a.Rs; return Math.abs(d)<0.004 ? "Hybrid" : d>=0 ? "Total" : "Annular";
+}
+// Type of lunar eclipse at a full moon (null if none)
+function lunarType(a){
+  const b=Math.abs(a.lat);
+  if(b < a.umbra-a.Rm) return "Total";
+  if(b < a.umbra+a.Rm) return "Partial";
+  if(b < a.pen  +a.Rm) return "Penumbral";
+  return null;
+}
+
 function cloneState(S){ const C={}; for(const k of ['x','y','z','vx','vy','vz','m']) C[k]=S[k].slice(); return C; }
-function forecastSim(S0,count){               // PREDICT eclipses by integrating the model forward
-  const S=cloneState(S0), h=0.06; let t=0, prev=geom(S).elong, out=[], guard=0;
-  while(out.length<count && guard++<60000){
-    verlet(S,h); t+=h; const g=geom(S);
-    if(prev*g.elong<0 && Math.abs(prev)<90 && Math.abs(g.elong)<90){    // new-moon (conjunction) crossing
-      if(Math.abs(g.lat)<ECLIPSE_LIMIT){
-        const al=Math.abs(g.lat); let type = al<0.45?"Total" : al<0.95?"Annular" : "Partial";
-        out.push({day:simDay+t, beta:g.lat, type});
-      }
+function forecastSim(S0,count){               // PREDICT eclipses (solar + lunar) by integrating forward
+  const S=cloneState(S0), h=0.06; let t=0, out=[], guard=0;
+  let pe=geom(S).elong, pd=fold180(pe-180);
+  while(out.length<count && guard++<90000){
+    verlet(S,h); t+=h; const g=geom(S), dl=fold180(g.elong-180);
+    if(pe*g.elong<0 && Math.abs(pe)<90 && Math.abs(g.elong)<90){       // new moon → solar
+      const ty=solarType(angles(S)); if(ty) out.push({day:simDay+t, beta:g.lat, type:ty, eType:'solar'});
     }
-    prev=g.elong;
+    if(pd*dl<0 && Math.abs(pd)<90 && Math.abs(dl)<90){                  // full moon → lunar
+      const ty=lunarType(angles(S)); if(ty) out.push({day:simDay+t, beta:g.lat, type:ty, eType:'lunar'});
+    }
+    pe=g.elong; pd=dl;
   }
   return out;
 }
@@ -506,6 +535,22 @@ const beam=new THREE.Line(beamGeo,new THREE.LineBasicMaterial({color:0xff7a4d,tr
 scene.add(beam);
 const earthFlare=glowSprite(3.4,0.0); earthFlare.material.color.set(0xff7a4d); scene.add(earthFlare);
 
+/* ---- Earth's shadow cone (umbra + penumbra) — why lunar eclipses happen ---- */
+const shadowGrp=new THREE.Group(); scene.add(shadowGrp);
+const penCone=new THREE.Mesh(new THREE.ConeGeometry(1.4,5.2,40,1,true),
+  new THREE.MeshBasicMaterial({color:0x2a3a55,transparent:true,opacity:0.07,side:THREE.DoubleSide,depthWrite:false}));
+const umbraCone=new THREE.Mesh(new THREE.ConeGeometry(0.72,4.0,40,1,true),
+  new THREE.MeshBasicMaterial({color:0x05060a,transparent:true,opacity:0.34,side:THREE.DoubleSide,depthWrite:false}));
+shadowGrp.add(penCone); shadowGrp.add(umbraCone);
+const _yUp=new THREE.Vector3(0,1,0), _dir=new THREE.Vector3();
+function updateShadowCone(){
+  const ep=bodies[2].position; if(ep.lengthSq()<1e-6) return;
+  _dir.copy(ep).normalize();                                  // anti-sun = away from the Sun (origin)
+  shadowGrp.quaternion.setFromUnitVectors(_yUp,_dir);         // cone apex (+y) points away from Sun
+  umbraCone.position.set(0,2.0,0); penCone.position.set(0,2.6,0);   // base at Earth, tapering outward
+  shadowGrp.position.copy(ep);
+}
+
 /* ---- floating HTML labels ---- */
 const labelLayer=document.getElementById('labels'); const labels=[];
 for(const p of PLANETS){
@@ -570,9 +615,9 @@ function renderForecast(){
   for(const ev of eclipses){
     const days=Math.max(0,ev.day-simDay), div=document.createElement('div');
     div.className="ev "+(ev.type==="Total"?"total":"");
-    div.innerHTML=`<div class="ico"></div><div class="meta">
+    div.innerHTML=`<div class="ico ${ev.eType}">${ev.eType==='lunar'?'🌙':'☀'}</div><div class="meta">
       <div class="d">${fmtDate(dayToDate(ev.day))}</div>
-      <div class="t"><span class="badge ${ev.type}">${ev.type}</span> lat ${ev.beta.toFixed(2)}°</div></div>
+      <div class="t"><span class="badge ${ev.type}">${ev.type}</span> ${ev.eType} · lat ${ev.beta.toFixed(2)}°</div></div>
       <div class="cd">${days<1?"now":"in "+Math.round(days)+"d"}</div>`;
     list.appendChild(div);
   }
@@ -636,7 +681,8 @@ function tick(now){
   const dt=Math.min((now-last)/1000,0.1); last=now;
   if(playing){
     let f = surfaceActive ? 0.0015 : 1;        // surface view runs in slow motion so the eclipse is watchable
-    if(surfaceActive && eclipseView(state).cover>0.95) f*=0.15;   // crawl through totality
+    if(surfaceActive){ const cov = Math.abs(geom(state).elong)>90 ? lunarView(state).cover : eclipseView(state).cover;
+      if(cov>0.9) f*=0.2; }                     // crawl through totality
     advance(dt*speed*f);                        // ← orbits come from gravity, not a clock formula
   }
 
@@ -656,6 +702,7 @@ function tick(now){
   const emx=state.x[9]-state.x[3], emy=state.y[9]-state.y[3], emz=state.z[9]-state.z[3];
   const dmn=Math.hypot(emx,emy,emz)||1e-9;
   moon.position.set(ed.x+emx/dmn*1.7, ed.y+emz/dmn*1.7, ed.z+emy/dmn*1.7);
+  updateShadowCone();
 
   // eclipse geometry — derived from the simulated Sun/Earth/Moon positions
   const gm=geom(state), e=gm.elong, b=gm.lat;
@@ -706,27 +753,33 @@ addEventListener('keydown',ev=>{
    "ENTER EARTH" — watch the eclipse from the surface,
    driven entirely by the simulated Sun/Earth/Moon geometry.
    ============================================================ */
-const SUN_AU=0.0046491, MOON_RAD_AU=1.16138e-5, PARALLAX=0.95; // physical radii (AU); max topocentric Moon shift (deg)
+// overlap area of two circles (radii r1,r2) at centre separation d
+function lensArea(r1,r2,d){
+  if(d>=r1+r2) return 0;
+  if(d<=Math.abs(r1-r2)) return Math.PI*Math.min(r1,r2)**2;
+  const a1=r1*r1*Math.acos((d*d+r1*r1-r2*r2)/(2*d*r1)),
+        a2=r2*r2*Math.acos((d*d+r2*r2-r1*r1)/(2*d*r2)),
+        a3=0.5*Math.sqrt(Math.max(0,(-d+r1+r2)*(d+r1-r2)*(d-r1+r2)*(d+r1+r2)));
+  return a1+a2-a3;
+}
+// SOLAR eclipse as seen from the best spot on Earth (topocentric via parallax)
 function eclipseView(S){
-  const g=geom(S), e=3;
-  const dES=Math.hypot(S.x[0]-S.x[e],S.y[0]-S.y[e],S.z[0]-S.z[e]);
-  const dEM=Math.hypot(S.x[9]-S.x[e],S.y[9]-S.y[e],S.z[9]-S.z[e]);
-  const Rs=Math.atan(SUN_AU/dES)*180/Math.PI, Rm=Math.atan(MOON_RAD_AU/dEM)*180/Math.PI;
-  // observer stands at the best spot on Earth → null the season latitude up to the lunar parallax
-  const apLat = g.lat>=0 ? Math.max(0,g.lat-PARALLAX) : Math.min(0,g.lat+PARALLAX);
-  const sep=Math.hypot(g.elong, apLat);
-  let A=0;
-  if(sep<Rs+Rm){
-    if(sep<=Math.abs(Rs-Rm)) A=Math.PI*Math.min(Rs,Rm)**2;
-    else{ const a1=Rs*Rs*Math.acos((sep*sep+Rs*Rs-Rm*Rm)/(2*sep*Rs)),
-               a2=Rm*Rm*Math.acos((sep*sep+Rm*Rm-Rs*Rs)/(2*sep*Rm)),
-               a3=0.5*Math.sqrt(Math.max(0,(-sep+Rs+Rm)*(sep+Rs-Rm)*(sep-Rs+Rm)*(sep+Rs+Rm)));
-          A=a1+a2-a3; }
-  }
-  const cover=Math.min(1,A/(Math.PI*Rs*Rs));
+  const a=angles(S);
+  const apLat = a.lat>=0 ? Math.max(0,a.lat-PARALLAX) : Math.min(0,a.lat+PARALLAX);
+  const sep=Math.hypot(a.elong, apLat), Rs=a.Rs, Rm=a.Rm;
+  const cover=Math.min(1, lensArea(Rs,Rm,sep)/(Math.PI*Rs*Rs));
   let kind="—";
-  if(sep<Rs+Rm) kind = sep<=Math.abs(Rs-Rm) ? (Rm>=Rs?"Total":"Annular") : "Partial";
-  return {elong:g.elong, lat:apLat, Rs, Rm, sep, cover, kind};
+  if(sep<Rs+Rm){
+    if(sep<=Math.abs(Rs-Rm)){ const d=Rm-Rs; kind = Math.abs(d)<0.004?"Hybrid":(d>=0?"Total":"Annular"); }
+    else kind="Partial";
+  }
+  return {elong:a.elong, lat:apLat, Rs, Rm, sep, cover, kind};
+}
+// LUNAR eclipse — Earth's shadow on the Moon (visible from the whole night hemisphere)
+function lunarView(S){
+  const a=angles(S), sep=Math.hypot(a.dlon, a.lat);
+  const cover=Math.min(1, lensArea(a.umbra,a.Rm,sep)/(Math.PI*a.Rm*a.Rm));   // fraction of Moon in umbra
+  return {dlon:a.dlon, lat:a.lat, Rm:a.Rm, umbra:a.umbra, pen:a.pen, sep, cover, kind:lunarType(a)||"—"};
 }
 
 const surfaceEl=document.getElementById('surface');
@@ -735,9 +788,14 @@ let surfaceActive=false;
 const sStars=[]; for(let i=0;i<260;i++) sStars.push({x:Math.random(),y:Math.random()*0.8,r:Math.random()*1.2+0.3,t:Math.random()});
 const lerp=(a,b,t)=>a+(b-a)*t, mixC=(c1,c2,t)=>[lerp(c1[0],c2[0],t)|0,lerp(c1[1],c2[1],t)|0,lerp(c1[2],c2[2],t)|0], rgb=c=>`rgb(${c[0]},${c[1]},${c[2]})`;
 
+const craters=[]; for(let i=0;i<14;i++){ const rr=Math.random()*0.78, aa=Math.random()*TAU;
+  craters.push({x:Math.cos(aa)*rr, y:Math.sin(aa)*rr, r:0.04+Math.random()*0.11}); }
 function drawSurface(){
   const dpr=Math.min(devicePixelRatio||1,2), W=innerWidth, H=innerHeight;
   if(sCv.width!==(W*dpr|0)){ sCv.width=W*dpr; sCv.height=H*dpr; sx.setTransform(dpr,0,0,dpr,0,0); }
+  if(Math.abs(geom(state).elong) > 90) drawLunarSurface(W,H); else drawSolarSurface(W,H);
+}
+function drawSolarSurface(W,H){
   const ev=eclipseView(state);
   const b=Math.max(ev.kind==="Annular"?0.16:0.0, 1-Math.pow(ev.cover,3));   // sky brightness 1(day)..0(totality)
 
@@ -777,8 +835,14 @@ function drawSurface(){
     sx.fillStyle=dr; sx.beginPath(); sx.arc(bx,by,moonPx,0,TAU); sx.fill();
   }
 
-  // ---- sci-fi Egypt: monuments + holographic field under the eclipse ----
-  const u=Math.min(W,H), horizonY=H*0.82, CX=cx, CY=cy, SR=sunPx;
+  drawEgypt(W,H,b);
+  document.getElementById('sKind').textContent = ev.kind==="—"?"No eclipse":ev.kind+" solar eclipse";
+  document.getElementById('sCov').textContent  = (ev.cover*100|0)+"% of Sun covered · "+fmtDate(dayToDate(simDay));
+}
+
+// ---- sci-fi Egypt foreground (shared by both views; b = sky brightness 0..1) ----
+function drawEgypt(W,H,b){
+  const u=Math.min(W,H), horizonY=H*0.82, CX=W*0.5, CY=H*0.4, SR=u*0.12;
   // sand — dark gradient (warm by day, near-black at totality)
   const dg=sx.createLinearGradient(0,horizonY,0,H);
   dg.addColorStop(0,rgb(mixC([10,9,15],[54,42,38],b))); dg.addColorStop(1,rgb(mixC([2,2,5],[14,11,13],b)));
@@ -840,14 +904,44 @@ function drawSurface(){
     const gr=sx.createRadialGradient(ox,oy,0,ox,oy,r); gr.addColorStop(0,"rgba(160,230,255,0.85)"); gr.addColorStop(1,"rgba(160,230,255,0)");
     sx.fillStyle=gr; sx.beginPath(); sx.arc(ox,oy,r,0,TAU); sx.fill(); }
   sx.restore();
-
-  document.getElementById('sKind').textContent = ev.kind==="—" ? "No eclipse" : ev.kind+" eclipse";
-  document.getElementById('sCov').textContent  = (ev.cover*100).toFixed(0)+"% of Sun covered · "+fmtDate(dayToDate(simDay));
 }
 
-function nextGoodEclipse(){                        // prefer a central (deep) eclipse so totality is visible
-  const list=forecastSim(state,12);
-  return list.find(e=>Math.abs(e.beta)<0.9) || list[0];
+// ---- LUNAR eclipse from the surface: full Moon + Earth's shadow → blood moon ----
+function drawLunarSurface(W,H){
+  const lv=lunarView(state), bFg=0.04+0.10*(1-lv.cover);
+  const redt=Math.max(0,(lv.cover-0.6)/0.4);                       // sky reddens at totality
+  const top=mixC([3,5,16],[16,5,7],redt), hor=mixC([18,20,40],[36,13,15],redt);
+  const grd=sx.createLinearGradient(0,0,0,H); grd.addColorStop(0,rgb(top)); grd.addColorStop(1,rgb(hor));
+  sx.fillStyle=grd; sx.fillRect(0,0,W,H);
+  { const a=0.45+0.45*lv.cover; sx.fillStyle="#eef2ff";                 // stars (brighter once Moon dims)
+    for(const s of sStars){ sx.globalAlpha=a*(0.35+0.65*s.t); sx.beginPath(); sx.arc(s.x*W,s.y*H,s.r,0,TAU); sx.fill(); } sx.globalAlpha=1; }
+  const moonPx=Math.min(W,H)*0.15, scale=moonPx/lv.Rm, cx=W*0.5, cy=H*0.38;
+  const shx=cx-lv.dlon*scale, shy=cy+lv.lat*scale, umbraPx=lv.umbra*scale, penPx=lv.pen*scale;
+  const hg=sx.createRadialGradient(cx,cy,moonPx*0.8,cx,cy,moonPx*2.4);   // moon halo, fades as eclipsed
+  hg.addColorStop(0,`rgba(220,228,240,${0.20*(1-lv.cover)})`); hg.addColorStop(1,"rgba(220,228,240,0)");
+  sx.fillStyle=hg; sx.beginPath(); sx.arc(cx,cy,moonPx*2.4,0,TAU); sx.fill();
+  sx.save(); sx.beginPath(); sx.arc(cx,cy,moonPx,0,TAU); sx.clip();
+  const mg=sx.createRadialGradient(cx-moonPx*0.25,cy-moonPx*0.25,moonPx*0.2,cx,cy,moonPx);
+  mg.addColorStop(0,"#dad6cd"); mg.addColorStop(0.8,"#bdb8ad"); mg.addColorStop(1,"#8d8980");
+  sx.fillStyle=mg; sx.fillRect(cx-moonPx,cy-moonPx,moonPx*2,moonPx*2);
+  sx.fillStyle="rgba(120,115,107,0.45)";                                // maria / craters
+  for(const c of craters){ sx.beginPath(); sx.arc(cx+c.x*moonPx,cy+c.y*moonPx,c.r*moonPx,0,TAU); sx.fill(); }
+  const pg=sx.createRadialGradient(shx,shy,umbraPx*0.8,shx,shy,penPx);   // penumbra dimming
+  pg.addColorStop(0,"rgba(8,8,16,0.5)"); pg.addColorStop(1,"rgba(8,8,16,0)");
+  sx.fillStyle=pg; sx.beginPath(); sx.arc(shx,shy,penPx,0,TAU); sx.fill();
+  const ug=sx.createRadialGradient(shx,shy,0,shx,shy,umbraPx);          // umbra → coppery blood-red
+  ug.addColorStop(0,"rgba(122,32,14,0.94)"); ug.addColorStop(0.7,"rgba(92,24,12,0.94)");
+  ug.addColorStop(0.92,"rgba(60,20,14,0.9)"); ug.addColorStop(1,"rgba(40,16,16,0)");
+  sx.fillStyle=ug; sx.beginPath(); sx.arc(shx,shy,umbraPx,0,TAU); sx.fill();
+  sx.restore();
+  drawEgypt(W,H,bFg);
+  document.getElementById('sKind').textContent = lv.kind==="—"?"Full Moon · no eclipse":lv.kind+" lunar eclipse";
+  document.getElementById('sCov').textContent  = (lv.cover*100|0)+"% of Moon in shadow · "+fmtDate(dayToDate(simDay));
+}
+
+function nextGoodEclipse(){                        // next deep, watchable eclipse (solar central or lunar total/partial)
+  const list=forecastSim(state,16);
+  return list.find(e=> e.eType==='solar' ? Math.abs(e.beta)<0.9 : (e.type==='Total'||e.type==='Partial')) || list[0];
 }
 function gotoDay(tgt){ let g=0; while(simDay<tgt && g++<500000) advance(tgt-simDay); lastForecast=-1e9; }
 function enterSurface(){
@@ -885,10 +979,13 @@ window.__sim={ rev:THREE.REVISION,
       geom:geom(state)}; },
   energy:()=>{ let K=0,U=0; for(let i=0;i<NB;i++) K+=0.5*state.m[i]*(state.vx[i]**2+state.vy[i]**2+state.vz[i]**2);
     for(let i=0;i<NB;i++)for(let j=i+1;j<NB;j++){const r=Math.hypot(state.x[j]-state.x[i],state.y[j]-state.y[i],state.z[j]-state.z[i]); U-=G*state.m[i]*state.m[j]/r;} return K+U; },
-  forecast:()=>forecastSim(state,6).map(e=>({date:fmtDate(dayToDate(e.day)),lat:+e.beta.toFixed(2),type:e.type})),
+  forecast:()=>forecastSim(state,8).map(e=>({date:fmtDate(dayToDate(e.day)),lat:+e.beta.toFixed(2),type:e.type,eType:e.eType})),
   enterEarth:()=>enterSurface(), exitEarth:()=>exitSurface(),
   eclipse:()=>{ const v=eclipseView(state); return {kind:v.kind, cover:+v.cover.toFixed(3),
     sep:+v.sep.toFixed(3), Rs:+v.Rs.toFixed(3), Rm:+v.Rm.toFixed(3), surfaceActive}; },
+  lunar:()=>{ const v=lunarView(state); return {kind:v.kind, cover:+v.cover.toFixed(3),
+    dlon:+v.dlon.toFixed(2), lat:+v.lat.toFixed(2), umbra:+v.umbra.toFixed(3), Rm:+v.Rm.toFixed(3)}; },
+  elong:()=>+geom(state).elong.toFixed(1),
   cam:()=>({ pos:camera.position.toArray().map(v=>+v.toFixed(1)), fov:camera.fov,
     elevationDeg:+(Math.asin(camera.position.y/camera.position.length())*180/Math.PI).toFixed(1),
     planetScale:bodies[0].scale.x }),

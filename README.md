@@ -18,16 +18,21 @@ Single self-contained `index.html` — no build step.
 - **Real gravity, not faked orbits.** Every body moves under `F = G·m₁·m₂/r²`, integrated with a
   symplectic velocity-Verlet integrator. Orbital periods, ellipses and perturbations *emerge* from
   the physics (energy is conserved to ~10⁻¹⁵ over years of simulated time).
-- **Physically-derived eclipse forecast.** The Moon's 5.14°-inclined orbit is perturbed by the Sun,
-  so its nodes regress (~18.6 yr) and **eclipse seasons emerge on their own**. Upcoming eclipses are
-  found by integrating the model forward and classified Total / Annular / Partial.
+- **Physically-derived eclipse forecast — solar *and* lunar.** The Moon's 5.14°-inclined orbit is
+  perturbed by the Sun, so its nodes regress (~18.6 yr) and **eclipse seasons emerge on their own**
+  (solar at new moon, lunar ~2 weeks later at full moon). Found by integrating the model forward and
+  classified from the Moon's live distance: solar **Total / Annular / Hybrid / Partial**, lunar
+  **Total / Partial / Penumbral**.
+- **Lunar eclipses too.** Earth's shadow cone (umbra + penumbra) is rendered in 3D; from the surface
+  you watch the full Moon slide into Earth's shadow and turn a coppery **"blood moon"** at totality.
 - **Cinematic 3D rendering.** Three.js with real NASA-style planet textures, day/night terminators,
   a procedural granulating Sun, bloom, Saturn's ring, Earth's clouds + atmosphere, a Milky-Way
   backdrop and HUD labels that track each planet.
 - **🌍 Enter Earth.** Click the Earth (or the globe button) to drop onto the surface and watch the
-  eclipse unfold — the Moon crossing the Sun, the sky darkening, stars appearing, the corona and the
-  diamond-ring — over a **sci-fi Egypt** horizon (glowing pyramids, light beam, holographic sands).
-  Total vs. annular is decided by the Moon's real distance in the sim.
+  eclipse unfold — for a solar eclipse the Moon crossing the Sun, sky darkening, corona and diamond
+  ring; for a lunar eclipse the full Moon reddening into a blood moon — over a **sci-fi Egypt** horizon
+  (glowing pyramids, light beam, holographic sands). Total vs. annular is decided by the Moon's real
+  distance in the sim.
 - **Responsive.** Adapts framing and HUD for desktop and mobile.
 
 ## 🎮 Controls
