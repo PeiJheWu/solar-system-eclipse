@@ -155,6 +155,30 @@
   #exitMap:hover{border-color:var(--cyan);background:rgba(95,227,255,.15)}
   @media (max-width:780px){ #sarosInfo{min-width:128px} #mapCanvas{max-height:52vh} }
 
+  /* ---- best-viewing panel ---- */
+  #viewing{position:fixed;z-index:9;top:50%;left:50%;transform:translate(-50%,-50%) scale(.97);
+    width:min(94vw,480px);max-height:78vh;display:flex;flex-direction:column;opacity:0;pointer-events:none;
+    background:var(--panel);border:1px solid var(--panel-bd);border-radius:16px;backdrop-filter:blur(16px);
+    box-shadow:0 16px 60px rgba(0,0,0,.6);transition:.3s ease;overflow:hidden}
+  #viewing.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+  .vhead{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;font-size:14px;
+    letter-spacing:1px;font-weight:600;border-bottom:1px solid var(--panel-bd)}
+  .vhead button{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer}
+  .vhead button:hover{color:var(--text)}
+  #viewList{overflow-y:auto;padding:6px 10px 12px}
+  .vrow{display:flex;align-items:center;gap:11px;padding:10px 8px;border-top:1px solid rgba(255,255,255,.06)}
+  .vrow:first-child{border-top:none}
+  .vp{font-family:var(--mono);font-size:13px;font-weight:600;width:62px;flex:none}
+  .vmid{flex:1;min-width:0}
+  .vmid .vt{font-size:12.5px;color:var(--text)}
+  .vmid .vs{font-size:10.5px;color:var(--muted);margin-top:2px}
+  .vrow.great .vmid .vt{color:var(--amber)}
+  .vcd{font-family:var(--mono);font-size:10.5px;color:var(--cyan);text-align:right;line-height:1.5;white-space:nowrap}
+  .vcd span{color:var(--muted)}
+  .vjump{background:rgba(95,227,255,.08);border:1px solid var(--panel-bd);color:var(--text);
+    padding:6px 10px;border-radius:8px;cursor:pointer;font-size:11px;font-family:var(--mono);flex:none}
+  .vjump:hover{background:rgba(95,227,255,.2);border-color:var(--cyan)}
+
   @media (max-width:780px){
     #title,#forecast,#diagwrap{display:none}
     .hint{display:none}
@@ -213,6 +237,7 @@
   <button id="jump" title="Jump to next eclipse">⏭</button>
   <button id="earthBtn" title="Enter Earth — watch the eclipse from the surface">🌍</button>
   <button id="mapBtn" title="Totality path & Saros cycle">🗺</button>
+  <button id="viewBtn" title="Best viewing — opposition & greatest elongation">🔭</button>
 </div>
 
 <div class="hint">drag = orbit · scroll = zoom · space = play/pause · 🌍 surface · 🗺 path & Saros</div>
@@ -232,6 +257,11 @@
     <button id="sarosNext" title="Next Saros (+18y 11d)">Saros ▶</button>
   </div>
   <button id="exitMap">✕ Exit</button>
+</div>
+
+<div id="viewing">
+  <div class="vhead">🔭 Best viewing · 最佳觀測<button id="exitView">✕</button></div>
+  <div id="viewList"></div>
 </div>
 
 <script type="importmap">
@@ -390,6 +420,49 @@ function measureSaros(){                // engine's synodic month & Saros period
     pe=e; }
   let syn=29.5306; if(nm.length>=2){ let s=0; for(let i=1;i<nm.length;i++) s+=nm[i]-nm[i-1]; syn=s/(nm.length-1); }
   return { synodic:syn, saros:223*syn };
+}
+
+/* ---- Best planet-viewing events: opposition (outer) & greatest elongation (inner) ---- */
+const VIS={Mercury:{H:-0.6,b:0.038},Venus:{H:-4.4,b:0.013},Mars:{H:-1.5,b:0.016},
+  Jupiter:{H:-9.4,b:0.005},Saturn:{H:-8.9,b:0.044},Uranus:{H:-7.2,b:0.001},Neptune:{H:-6.9,b:0.001}};
+const wrapPi=a=>Math.atan2(Math.sin(a),Math.cos(a));
+const helioLon=(S,k)=>Math.atan2(S.y[k]-S.y[0], S.x[k]-S.x[0]);
+const geoDist=(S,si)=>Math.hypot(S.x[si]-S.x[3],S.y[si]-S.y[3],S.z[si]-S.z[3]);
+function geoElong(S,si){ const e=3;
+  let sx=S.x[0]-S.x[e],sy=S.y[0]-S.y[e],sz=S.z[0]-S.z[e]; const ds=Math.hypot(sx,sy,sz);
+  let px=S.x[si]-S.x[e],py=S.y[si]-S.y[e],pz=S.z[si]-S.z[e]; const dp=Math.hypot(px,py,pz);
+  return Math.acos(Math.max(-1,Math.min(1,(sx*px+sy*py+sz*pz)/(ds*dp))))*R2D;
+}
+function planetMag(i,S){ const si=i+1, v=VIS[PLANETS[i].name];
+  const r=Math.hypot(S.x[si]-S.x[0],S.y[si]-S.y[0],S.z[si]-S.z[0]), D=geoDist(S,si);
+  let a1x=S.x[0]-S.x[si],a1y=S.y[0]-S.y[si],a1z=S.z[0]-S.z[si], a2x=S.x[3]-S.x[si],a2y=S.y[3]-S.y[si],a2z=S.z[3]-S.z[si];
+  const al=Math.acos(Math.max(-1,Math.min(1,(a1x*a2x+a1y*a2y+a1z*a2z)/(Math.hypot(a1x,a1y,a1z)*Math.hypot(a2x,a2y,a2z)))))*R2D;
+  return v.H + 5*Math.log10(r*D) + v.b*al;
+}
+function bestEvent(i){                  // next optimal observation for planet i (0..7, skip Earth=2)
+  if(i===2) return null;
+  const si=i+1, inner=PLANETS[i].a<1.0, S=cloneState(state); let t=0, g=0;
+  if(inner){                            // greatest elongation = local max of Sun–Earth–planet angle
+    let pe=geoElong(S,si), de=0;
+    while(g++<9000 && t<900){ verlet(S,0.25); t+=0.25; const e=geoElong(S,si), d=e-pe;
+      if(de>0 && d<=0){
+        let sx=S.x[0]-S.x[3],sy=S.y[0]-S.y[3], px=S.x[si]-S.x[3],py=S.y[si]-S.y[3];
+        const side=(sx*py-sy*px)>0?'East · evening star':'West · morning star';
+        return {planet:PLANETS[i].name,c:PLANETS[i].c,day:simDay+t-0.25,type:'Greatest elongation',detail:side,val:pe,dist:geoDist(S,si),mag:planetMag(i,S)};
+      }
+      de=d; pe=e;
+    }
+  } else {                              // opposition = Earth & planet share heliocentric longitude
+    let pd=wrapPi(helioLon(S,si)-helioLon(S,3));
+    while(g++<9000 && t<1150){ verlet(S,0.5); t+=0.5; const d=wrapPi(helioLon(S,si)-helioLon(S,3));
+      if(pd>0 && d<=0 && Math.abs(pd)<1){ const dist=geoDist(S,si);
+        const great=PLANETS[i].name==='Mars' && dist<0.45;
+        return {planet:PLANETS[i].name,c:PLANETS[i].c,day:simDay+t,type:great?'GREAT opposition':'Opposition',detail:'closest · brightest · up all night',val:dist,dist,mag:planetMag(i,S)};
+      }
+      pd=d;
+    }
+  }
+  return null;
 }
 
 function cloneState(S){ const C={}; for(const k of ['x','y','z','vx','vy','vz','m']) C[k]=S[k].slice(); return C; }
@@ -1144,6 +1217,27 @@ document.getElementById('exitMap').onclick=closeMap;
 document.getElementById('sarosNext').onclick=()=>sarosStep(1);
 document.getElementById('sarosPrev').onclick=()=>sarosStep(-1);
 addEventListener('resize',()=>{ if(mapActive) drawMap(); });
+
+/* ---- Best viewing panel (opposition / greatest elongation) ---- */
+const viewEl=document.getElementById('viewing'), viewList=document.getElementById('viewList');
+function openViewing(){
+  const evs=[]; for(let i=0;i<8;i++){ if(i===2) continue; const e=bestEvent(i); if(e) evs.push(e); }
+  evs.sort((a,b)=>a.day-b.day);
+  viewList.innerHTML = evs.map(e=>{
+    const days=Math.max(0,Math.round(e.day-simDay)), opp=e.type.toLowerCase().includes('opposition');
+    const sub = opp ? `${e.dist.toFixed(2)} AU away · ${e.detail}` : `${e.val.toFixed(0)}° from Sun · ${e.detail}`;
+    return `<div class="vrow${e.type[0]==='G'&&!opp?'':(e.type.startsWith('GREAT')?' great':'')}">
+      <div class="vp" style="color:#${('00000'+(e.c.toString(16))).slice(-6)}">${e.planet}</div>
+      <div class="vmid"><div class="vt">${e.type}</div><div class="vs">${sub} · ≈ mag ${e.mag.toFixed(1)}</div></div>
+      <div class="vcd">${fmtDate(dayToDate(e.day))}<br><span>in ${days}d</span></div>
+      <button class="vjump" data-day="${e.day}">Jump</button></div>`;
+  }).join('') || '<div class="vrow"><div class="vmid">No events found</div></div>';
+  viewList.querySelectorAll('.vjump').forEach(b=>b.onclick=()=>{ gotoDay(parseFloat(b.dataset.day)); playing=false; playBtn.textContent="▶"; closeViewing(); });
+  viewEl.classList.add('show');
+}
+function closeViewing(){ viewEl.classList.remove('show'); }
+document.getElementById('viewBtn').onclick=openViewing;
+document.getElementById('exitView').onclick=closeViewing;
 
 /* ---- debug hook for verification ---- */
 window.__sim={ rev:THREE.REVISION,
