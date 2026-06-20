@@ -182,6 +182,28 @@
     padding:6px 10px;border-radius:8px;cursor:pointer;font-size:11px;font-family:var(--mono);flex:none}
   .vjump:hover{background:rgba(95,227,255,.2);border-color:var(--cyan)}
 
+  /* ---- globe location picker ---- */
+  #globe{position:fixed;inset:0;z-index:10;opacity:0;pointer-events:none;transition:opacity .35s;
+    background:radial-gradient(120% 100% at 50% 0%, #0a1020, #04060e 70%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:52px 16px 96px}
+  #globe.show{opacity:1;pointer-events:auto}
+  .ghead{position:absolute;top:16px;left:0;right:0;text-align:center;font-family:var(--mono);font-size:14px;
+    letter-spacing:1px;color:var(--text)}
+  .ghead button{position:absolute;right:16px;top:-2px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer}
+  #globeCanvas{width:min(86vw,70vh);height:min(86vw,70vh);touch-action:none;cursor:crosshair}
+  #globeHint{position:absolute;top:46px;left:0;right:0;text-align:center;font-size:11px;color:var(--muted)}
+  #globeBar{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;
+    background:var(--panel);border:1px solid var(--panel-bd);border-radius:14px;padding:10px 14px;backdrop-filter:blur(14px);
+    box-shadow:0 8px 40px rgba(0,0,0,.5);flex-wrap:wrap;justify-content:center;max-width:94vw}
+  #obsReadout{font-family:var(--mono);font-size:12px;color:var(--cyan);min-width:150px;text-align:center}
+  #globeBar button{background:rgba(95,227,255,.08);border:1px solid var(--panel-bd);color:var(--text);
+    padding:9px 13px;border-radius:10px;cursor:pointer;font-size:12px;font-family:var(--mono)}
+  #globeBar button:hover{background:rgba(95,227,255,.2);border-color:var(--cyan)}
+  #obsBadge{position:fixed;top:96px;left:24px;z-index:4;font-family:var(--mono);font-size:11px;color:var(--cyan);
+    background:rgba(10,14,26,.6);border:1px solid var(--panel-bd);border-radius:8px;padding:5px 9px;display:none}
+  #obsBadge.show{display:block}
+  body.surface #obsBadge.show{display:block;top:auto;bottom:92px}
+
   @media (max-width:780px){
     #title,#forecast,#diagwrap{display:none}
     .hint{display:none}
@@ -243,7 +265,8 @@
   <button id="viewBtn" title="Best viewing — opposition & greatest elongation">🔭</button>
 </div>
 
-<div class="hint">drag = orbit · scroll = zoom · space = play/pause · 🌍 surface · 🗺 path & Saros</div>
+<div class="hint">drag = orbit · scroll = zoom · space = play/pause · 🌍 site · 🗺 path & Saros · 🔭 events</div>
+<div id="obsBadge"></div>
 
 <div id="surface">
   <canvas id="surfaceCanvas"></canvas>
@@ -265,6 +288,17 @@
 <div id="viewing">
   <div class="vhead">🔭 Sky events · 天象<button id="exitView">✕</button></div>
   <div id="viewList"></div>
+</div>
+
+<div id="globe">
+  <div class="ghead">🌍 選擇觀測地點 · Pick your site<button id="exitGlobe">✕</button></div>
+  <canvas id="globeCanvas"></canvas>
+  <div id="globeHint">drag to rotate · tap the globe to drop a pin</div>
+  <div id="globeBar">
+    <div id="obsReadout">No site selected</div>
+    <button id="useObs">Observe from here →</button>
+    <button id="bestObs">Best spot (geocentric)</button>
+  </div>
 </div>
 
 <script type="importmap">
@@ -414,6 +448,21 @@ function umbraGround(S, day){           // where the shadow axis (Sun→Moon) me
 }
 function subSolar(S, day){ const e=3; let x=S.x[0]-S.x[e],y=S.y[0]-S.y[e],z=S.z[0]-S.z[e]; const d=Math.hypot(x,y,z); return geo(x/d,y/d,z/d, day); }
 function sunDirOf(S){ const e=3; let x=S.x[0]-S.x[e],y=S.y[0]-S.y[e],z=S.z[0]-S.z[e]; const d=Math.hypot(x,y,z); return [x/d,y/d,z/d]; }
+
+/* ---- OBSERVER on Earth's surface (topocentric); null = geocentric / best-location ---- */
+let observer=null;   // {lat, lon} in model degrees
+function obsPos(S, day){           // observer 3D position (ecliptic frame, AU)
+  if(!observer) return [S.x[3],S.y[3],S.z[3]];
+  const d=dirOf(observer.lat,observer.lon,day);
+  return [S.x[3]+EARTH_AU*d[0], S.y[3]+EARTH_AU*d[1], S.z[3]+EARTH_AU*d[2]];
+}
+function altitudeOf(S, day, bx,by,bz){   // altitude (deg) of a body above the observer's horizon
+  if(!observer) return 90;
+  const d=dirOf(observer.lat,observer.lon,day), o=obsPos(S,day);
+  let vx=bx-o[0],vy=by-o[1],vz=bz-o[2]; const vl=Math.hypot(vx,vy,vz)||1;
+  return Math.asin(Math.max(-1,Math.min(1,(vx*d[0]+vy*d[1]+vz*d[2])/vl)))*R2D;
+}
+const sunAltitude=(S,day)=>altitudeOf(S,day,S.x[0],S.y[0],S.z[0]);
 
 function totalityPath(){                // central-eclipse ground track around the current instant
   const S=cloneState(state); let day=simDay;
@@ -587,6 +636,10 @@ const texLoader=new THREE.TextureLoader(manager);
 const maxAniso=renderer.capabilities.getMaxAnisotropy();
 function colorTex(f){ const t=texLoader.load(BASE+f); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=maxAniso; return t; }
 function dataTex(f){ const t=texLoader.load(BASE+f); t.anisotropy=maxAniso; return t; }
+const earthImg=new Image(); earthImg.crossOrigin="anonymous"; let earthData=null;   // for the 2D globe picker
+earthImg.onload=()=>{ const c=document.createElement('canvas'); c.width=earthImg.width; c.height=earthImg.height;
+  const x=c.getContext('2d'); x.drawImage(earthImg,0,0); try{ earthData=x.getImageData(0,0,c.width,c.height); }catch(e){} };
+earthImg.src=BASE+"earthmap1k.jpg";
 manager.onLoad=()=>document.getElementById('loading').classList.add('hide');
 setTimeout(()=>document.getElementById('loading').classList.add('hide'),9000); // fallback
 
@@ -987,7 +1040,23 @@ function lensArea(r1,r2,d){
 }
 // SOLAR eclipse as seen from the best spot on Earth (topocentric via parallax)
 function eclipseView(S){
-  const a=angles(S);
+  if(observer){                       // TOPOCENTRIC — exactly what the chosen site sees (real parallax + horizon)
+    const o=obsPos(S,simDay);
+    let sx=S.x[0]-o[0],sy=S.y[0]-o[1],sz=S.z[0]-o[2]; const ds=Math.hypot(sx,sy,sz);
+    let mx=S.x[9]-o[0],my=S.y[9]-o[1],mz=S.z[9]-o[2]; const dm=Math.hypot(mx,my,mz);
+    const Rs=Math.atan(SUN_AU/ds)*R2D, Rm=Math.atan(MOON_RAD_AU/dm)*R2D;
+    sx/=ds;sy/=ds;sz/=ds; mx/=dm;my/=dm;mz/=dm;
+    const sep=Math.acos(Math.max(-1,Math.min(1,sx*mx+sy*my+sz*mz)))*R2D;
+    let ex=-sy,ey=sx,ez=0; const de=Math.hypot(ex,ey)||1; ex/=de;ey/=de;            // east = up×sun
+    const nx=sy*ez-sz*ey, ny=sz*ex-sx*ez, nz=sx*ey-sy*ex;                            // north = sun×east
+    const mA=mx*sx+my*sy+mz*sz, mE=mx*ex+my*ey+mz*ez, mN=mx*nx+my*ny+mz*nz;          // Moon offset from Sun
+    const cover=Math.min(1, lensArea(Rs,Rm,sep)/(Math.PI*Rs*Rs));
+    let kind="—"; if(sep<Rs+Rm){ if(sep<=Math.abs(Rs-Rm)){ const d=Rm-Rs; kind=Math.abs(d)<0.004?"Hybrid":(d>=0?"Total":"Annular"); } else kind="Partial"; }
+    const sunAlt=sunAltitude(S,simDay);
+    return {elong:Math.atan2(mE,mA)*R2D, lat:Math.atan2(mN,Math.hypot(mA,mE))*R2D,
+            Rs, Rm, sep, cover, kind, sunAlt, visible:sunAlt>-0.83, topo:true};
+  }
+  const a=angles(S);                  // GEOCENTRIC best-location (no site chosen)
   const apLat = a.lat>=0 ? Math.max(0,a.lat-PARALLAX) : Math.min(0,a.lat+PARALLAX);
   const sep=Math.hypot(a.elong, apLat), Rs=a.Rs, Rm=a.Rm;
   const cover=Math.min(1, lensArea(Rs,Rm,sep)/(Math.PI*Rs*Rs));
@@ -996,13 +1065,40 @@ function eclipseView(S){
     if(sep<=Math.abs(Rs-Rm)){ const d=Rm-Rs; kind = Math.abs(d)<0.004?"Hybrid":(d>=0?"Total":"Annular"); }
     else kind="Partial";
   }
-  return {elong:a.elong, lat:apLat, Rs, Rm, sep, cover, kind};
+  return {elong:a.elong, lat:apLat, Rs, Rm, sep, cover, kind, visible:true, sunAlt:90};
 }
 // LUNAR eclipse — Earth's shadow on the Moon (visible from the whole night hemisphere)
 function lunarView(S){
   const a=angles(S), sep=Math.hypot(a.dlon, a.lat);
   const cover=Math.min(1, lensArea(a.umbra,a.Rm,sep)/(Math.PI*a.Rm*a.Rm));   // fraction of Moon in umbra
   return {dlon:a.dlon, lat:a.lat, Rm:a.Rm, umbra:a.umbra, pen:a.pen, sep, cover, kind:lunarType(a)||"—"};
+}
+// topocentric solar coverage + Sun altitude at a given state/day (for "visible from my site?")
+function topoSolar(S,day){
+  const o=obsPos(S,day), d=dirOf(observer.lat,observer.lon,day);
+  let sx=S.x[0]-o[0],sy=S.y[0]-o[1],sz=S.z[0]-o[2]; const ds=Math.hypot(sx,sy,sz);
+  let mx=S.x[9]-o[0],my=S.y[9]-o[1],mz=S.z[9]-o[2]; const dm=Math.hypot(mx,my,mz);
+  const Rs=Math.atan(SUN_AU/ds)*R2D, Rm=Math.atan(MOON_RAD_AU/dm)*R2D;
+  sx/=ds;sy/=ds;sz/=ds; mx/=dm;my/=dm;mz/=dm;
+  const sep=Math.acos(Math.max(-1,Math.min(1,sx*mx+sy*my+sz*mz)))*R2D;
+  return { cover:Math.min(1,lensArea(Rs,Rm,sep)/(Math.PI*Rs*Rs)), sunAlt:Math.asin(Math.max(-1,Math.min(1,sx*d[0]+sy*d[1]+sz*d[2])))*R2D };
+}
+// next SOLAR eclipse actually observable from the chosen site (Sun up + real coverage there)
+function nextSiteEclipse(){
+  if(!observer) return nextGoodEclipse();
+  const S=cloneState(state); let t=0,g=0, pe=geom(S).elong;
+  while(g++<400000 && t<3200){
+    verlet(S,0.05); t+=0.05; const e=geom(S).elong;
+    if(pe<0 && e>=0 && Math.abs(pe)<90 && Math.abs(e)<90 && solarType(angles(S))){   // a solar eclipse occurs
+      const C=cloneState(S); let day=simDay+t; for(let i=0;i<40;i++) verlet(C,-0.0025); day-=0.1;
+      let best=0,bestDay=day,up=false;
+      for(let i=0;i<80;i++){ verlet(C,0.0025); day+=0.0025; const v=topoSolar(C,day);
+        if(v.cover>best){ best=v.cover; bestDay=day; up=v.sunAlt>-0.83; } }
+      if(best>0.05 && up) return {day:bestDay, eType:'solar'};
+    }
+    pe=e;
+  }
+  return nextGoodEclipse();
 }
 
 const surfaceEl=document.getElementById('surface');
@@ -1020,6 +1116,15 @@ function drawSurface(){
 }
 function drawSolarSurface(W,H){
   const ev=eclipseView(state);
+  if(observer && !ev.visible){                 // chosen site is on the night side — Sun is down
+    const grd=sx.createLinearGradient(0,0,0,H); grd.addColorStop(0,rgb([4,6,16])); grd.addColorStop(1,rgb([14,16,34]));
+    sx.fillStyle=grd; sx.fillRect(0,0,W,H);
+    sx.fillStyle="#dfe6f5"; for(const s of sStars){ sx.globalAlpha=0.5+0.4*s.t; sx.beginPath(); sx.arc(s.x*W,s.y*H,s.r,0,TAU); sx.fill(); } sx.globalAlpha=1;
+    drawEgypt(W,H,0.06);
+    document.getElementById('sKind').textContent="Sun below horizon · not visible here";
+    document.getElementById('sCov').textContent=`Sun altitude ${ev.sunAlt.toFixed(0)}° (night) · ${fmtDate(dayToDate(simDay))}`;
+    return;
+  }
   const b=Math.max(ev.kind==="Annular"?0.16:0.0, 1-Math.pow(ev.cover,3));   // sky brightness 1(day)..0(totality)
 
   const top=mixC([5,7,20],[44,104,196],b), hor=mixC([54,38,64],[140,182,226],b);
@@ -1171,7 +1276,8 @@ function enterSurface(){
   if(surfaceActive) return;
   surfaceActive=true; document.body.classList.add('surface'); surfaceEl.classList.add('show');
   if(eclipseView(state).cover < 0.5){             // not already mid-eclipse → fly forward to a good one
-    const n=nextGoodEclipse(); if(n) gotoDay(n.day-0.12);
+    const n = observer ? nextSiteEclipse() : nextGoodEclipse();   // for a site: next eclipse visible FROM there
+    if(n) gotoDay(n.day - (observer?0.05:0.12));
   }
   playing=true; playBtn.textContent="⏸";
 }
@@ -1185,7 +1291,7 @@ canvas.addEventListener('pointerdown',e=>{_dx=e.clientX;_dy=e.clientY;});
 canvas.addEventListener('pointerup',e=>{
   if(surfaceActive || Math.hypot(e.clientX-_dx,e.clientY-_dy)>6) return;
   _pt.set((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1); _ray.setFromCamera(_pt,camera);
-  if(_ray.intersectObject(bodies[2],true).length) enterSurface();
+  if(_ray.intersectObject(bodies[2],true).length) openGlobe();
 });
 
 /* ============================================================
@@ -1224,6 +1330,9 @@ function drawMap(){
   const ss=subSolar(state,simDay), sx0=projX(ss.lon,W), sy0=projY(ss.lat,H);
   mxc.fillStyle="rgba(255,220,120,.95)"; mxc.beginPath(); mxc.arc(sx0,sy0,4,0,TAU); mxc.fill();
   mxc.strokeStyle="rgba(255,220,120,.4)"; mxc.lineWidth=1; mxc.beginPath(); mxc.arc(sx0,sy0,10,0,TAU); mxc.stroke();
+  if(observer){ const ox=projX(observer.lon,W), oy=projY(observer.lat,H);   // your chosen site
+    mxc.strokeStyle="#ff5a4d"; mxc.lineWidth=2; mxc.beginPath(); mxc.moveTo(ox-7,oy); mxc.lineTo(ox+7,oy); mxc.moveTo(ox,oy-7); mxc.lineTo(ox,oy+7); mxc.stroke();
+    mxc.beginPath(); mxc.arc(ox,oy,9,0,TAU); mxc.stroke(); }
   // Saros series: older members faint (watch them march west), current bright
   sarosHist.forEach((h,i)=>{ const cur=i===sarosHist.length-1, age=sarosHist.length-1-i;
     if(cur){ drawPathOn(h.path,"rgba(255,180,90,0.5)",9,0.5,W,H); drawPathOn(h.path,"#ffd14d",4,1,W,H); }
@@ -1304,6 +1413,72 @@ function closeViewing(){ viewEl.classList.remove('show'); }
 document.getElementById('viewBtn').onclick=openViewing;
 document.getElementById('exitView').onclick=closeViewing;
 
+/* ============================================================
+   GLOBE location picker — choose the observing site; all eclipse
+   calculations then run topocentrically from that point.
+   ============================================================ */
+const gCv=document.getElementById('globeCanvas'), gx=gCv.getContext('2d');
+const GN=380; let gLon=20, gLat=18, gpin=null, globeActive=false;
+const fmtLat=v=>Math.abs(v).toFixed(1)+'°'+(v>=0?'N':'S'), fmtLon=v=>Math.abs(v).toFixed(1)+'°'+(v>=0?'E':'W');
+function llFromView(nx,ny,nz){ const p=gLat*D2R,cp=Math.cos(p),sp=Math.sin(p),y=gLon*D2R,cy=Math.cos(y),sy=Math.sin(y);
+  const vy=ny*cp+nz*sp, vz=-ny*sp+nz*cp, vx=nx;
+  const px=vx*cy-vz*sy, pz=vx*sy+vz*cy;
+  return [Math.asin(Math.max(-1,Math.min(1,vy)))*R2D, Math.atan2(px,pz)*R2D]; }
+function llToScreen(lat,lon,cx,cyc,Rg){ const la=lat*D2R,lo=lon*D2R,p=gLat*D2R,y=gLon*D2R;
+  const Px=Math.cos(la)*Math.sin(lo),Py=Math.sin(la),Pz=Math.cos(la)*Math.cos(lo);
+  const x1=Px*Math.cos(y)+Pz*Math.sin(y), z1=-Px*Math.sin(y)+Pz*Math.cos(y), y1=Py;
+  const y2=y1*Math.cos(p)-z1*Math.sin(p), z2=y1*Math.sin(p)+z1*Math.cos(p);
+  return {x:cx+x1*Rg, y:cyc-y2*Rg, front:z2>0}; }
+function drawGlobe(){
+  if(gCv.width!==GN){ gCv.width=GN; gCv.height=GN; }
+  const cx=GN/2, cyc=GN/2, Rg=GN*0.47, sd=sunDirOf(state);
+  const p=gLat*D2R,cp=Math.cos(p),sp=Math.sin(p),y=gLon*D2R,cyaw=Math.cos(y),syaw=Math.sin(y);
+  const img=gx.createImageData(GN,GN), d=img.data;
+  for(let py=0;py<GN;py++) for(let px=0;px<GN;px++){ const o=(py*GN+px)*4;
+    const nx=(px-cx)/Rg, ny=-(py-cyc)/Rg, r2=nx*nx+ny*ny;
+    if(r2>1){ d[o+3]=0; continue; }
+    const nz=Math.sqrt(1-r2), vy=ny*cp+nz*sp, vz=-ny*sp+nz*cp;
+    const Px=nx*cyaw-vz*syaw, Pz=nx*syaw+vz*cyaw;
+    const lat=Math.asin(Math.max(-1,Math.min(1,vy)))*R2D, lon=Math.atan2(Px,Pz)*R2D;
+    let r=22,g=44,b=74;
+    if(earthData){ const tw=earthData.width,th=earthData.height; let u=((lon+180)/360*tw)|0,v=((90-lat)/180*th)|0;
+      u=(u%tw+tw)%tw; v=v<0?0:(v>=th?th-1:v); const ti=(v*tw+u)*4; r=earthData.data[ti];g=earthData.data[ti+1];b=earthData.data[ti+2]; }
+    const dir=dirOf(lat,lon,simDay), lit=dir[0]*sd[0]+dir[1]*sd[1]+dir[2]*sd[2];
+    const f=(lit>0?0.4+0.6*lit:0.15)*(0.55+0.45*nz);
+    d[o]=r*f; d[o+1]=g*f; d[o+2]=b*f; d[o+3]=255;
+  }
+  gx.putImageData(img,0,0);
+  gx.strokeStyle="rgba(170,200,255,.16)"; gx.lineWidth=1;
+  const gline=pts=>{ gx.beginPath(); let st=false; for(const q of pts){ const s=llToScreen(q[0],q[1],cx,cyc,Rg);
+    if(s.front){ st?gx.lineTo(s.x,s.y):gx.moveTo(s.x,s.y); st=true; } else st=false; } gx.stroke(); };
+  for(let lo=-180;lo<180;lo+=30){ const a=[]; for(let la=-90;la<=90;la+=4) a.push([la,lo]); gline(a); }
+  for(let la=-60;la<=60;la+=30){ const a=[]; for(let lo=-180;lo<=180;lo+=4) a.push([la,lo]); gline(a); }
+  const mark=(ll,col,ring)=>{ const s=llToScreen(ll.lat,ll.lon,cx,cyc,Rg); if(!s.front) return;
+    gx.fillStyle=col; gx.beginPath(); gx.arc(s.x,s.y,ring?5:4,0,TAU); gx.fill();
+    if(ring){ gx.strokeStyle=col; gx.lineWidth=2; gx.beginPath(); gx.arc(s.x,s.y,9,0,TAU); gx.stroke(); } };
+  mark(subSolar(state,simDay), "#ffd27a", false);            // sub-solar (local noon)
+  if(gpin) mark(gpin, "#ff5a4d", true);
+}
+earthImg.addEventListener('load',()=>{ if(globeActive) drawGlobe(); });
+function obsReadout(){ document.getElementById('obsReadout').textContent = gpin?`Site ${fmtLat(gpin.lat)} ${fmtLon(gpin.lon)}`:'Tap the globe to choose'; }
+function updateBadge(){ const el=document.getElementById('obsBadge');
+  if(observer){ el.textContent=`📍 Observing from ${fmtLat(observer.lat)} ${fmtLon(observer.lon)}`; el.classList.add('show'); } else el.classList.remove('show'); }
+let gDrag=false,gMoved=false,gx0=0,gy0=0,gl0=0,gt0=0;
+gCv.addEventListener('pointerdown',e=>{ gDrag=true;gMoved=false;gx0=e.clientX;gy0=e.clientY;gl0=gLon;gt0=gLat; gCv.setPointerCapture?.(e.pointerId); });
+gCv.addEventListener('pointermove',e=>{ if(!gDrag) return; const dx=e.clientX-gx0, dy=e.clientY-gy0;
+  if(Math.hypot(dx,dy)>4) gMoved=true; gLon=gl0-dx*0.5; gLat=Math.max(-85,Math.min(85,gt0+dy*0.5)); drawGlobe(); });
+gCv.addEventListener('pointerup',e=>{ gDrag=false; if(gMoved) return;
+  const r=gCv.getBoundingClientRect(), px=(e.clientX-r.left)/r.width*GN, py=(e.clientY-r.top)/r.height*GN;
+  const cx=GN/2,cyc=GN/2,Rg=GN*0.47, nx=(px-cx)/Rg, ny=-(py-cyc)/Rg;
+  if(nx*nx+ny*ny<=1){ const nz=Math.sqrt(1-nx*nx-ny*ny), ll=llFromView(nx,ny,nz); gpin={lat:ll[0],lon:ll[1]}; obsReadout(); drawGlobe(); } });
+function openGlobe(){ if(globeActive) return; globeActive=true; playing=false; playBtn.textContent="▶";
+  gpin = observer?{lat:observer.lat,lon:observer.lon}:null; document.getElementById('globe').classList.add('show'); obsReadout(); drawGlobe(); }
+function closeGlobe(){ globeActive=false; document.getElementById('globe').classList.remove('show'); }
+document.getElementById('exitGlobe').onclick=closeGlobe;
+document.getElementById('useObs').onclick=()=>{ if(gpin) observer={lat:gpin.lat,lon:gpin.lon}; updateBadge(); closeGlobe(); enterSurface(); };
+document.getElementById('bestObs').onclick=()=>{ observer=null; updateBadge(); closeGlobe(); enterSurface(); };
+document.getElementById('earthBtn').onclick=openGlobe;
+
 /* ---- debug hook for verification ---- */
 window.__sim={ rev:THREE.REVISION,
   state:()=>({simDay,playing,speed,objects:scene.children.length,
@@ -1335,6 +1510,8 @@ window.__sim={ rev:THREE.REVISION,
   saros:()=>measureSaros(),
   path:()=>{ const p=totalityPath(); return {n:p.length, first:p[0], mid:p[p.length>>1], last:p[p.length-1]}; },
   umbra:()=>umbraGround(state,simDay),
+  setObs:(lat,lon)=>{ observer = (lat==null)?null:{lat,lon}; },
+  obsEclipse:()=>{ const v=eclipseView(state); return {kind:v.kind,cover:+v.cover.toFixed(3),sep:+v.sep.toFixed(2),sunAlt:v.sunAlt!=null?+v.sunAlt.toFixed(1):null,visible:v.visible}; },
   moonChk:()=>({ earthMoonDisplay:+moon.position.distanceTo(earth.position).toFixed(2),
     expectDist:+(0.56*bodies[2].scale.x*4.2).toFixed(2), moonScale:+moon.scale.x.toFixed(2),
     ringPresent: !!moonOrbit }),
