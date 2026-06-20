@@ -626,7 +626,11 @@ function resize(){
   else camera.clearViewOffset();
   camera.updateProjectionMatrix();
 }
-addEventListener('resize',resize); resize();
+addEventListener('resize',resize);
+addEventListener('orientationchange',()=>setTimeout(resize,300));
+resize();
+// in-app browsers often report a transient/wrong size on first paint — re-fit a few times as it settles
+[150,500,1200].forEach(t=>setTimeout(resize,t));
 
 function tick(now){
   const dt=Math.min((now-last)/1000,0.1); last=now;
