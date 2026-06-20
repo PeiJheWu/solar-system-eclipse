@@ -590,22 +590,37 @@ function advance(days){                         // integrate the model forward/b
   while(Math.abs(r)>1e-9 && n<MAXSTEPS){ const h=sgn*Math.min(BASE_DT,Math.abs(r)); verlet(state,h); simDay+=h; r-=h; n++; }
 }
 
+let lastPortrait=null;
 function resize(){
   const w=innerWidth,h=innerHeight,dpr=Math.min(devicePixelRatio||1,2);
   renderer.setPixelRatio(dpr); renderer.setSize(w,h,false);
   composer.setPixelRatio(dpr); composer.setSize(w,h);
   bloom.setSize(w,h);
   const aspect=w/h; camera.aspect=aspect;
+  const portrait = aspect < 1;
+  // On first load / orientation flip pick a viewpoint: near top-down on phones (so the wide system
+  // fills the tall screen as a round disk instead of a thin sliver), tilted 3/4 on wide screens.
+  if(portrait!==lastPortrait){
+    const el = portrait ? 1.02 : 0.41;                 // camera elevation (rad): ~58° vs ~23°
+    const d0 = camera.position.distanceTo(controls.target)||120;
+    camera.position.set(0, Math.sin(el)*d0, Math.cos(el)*d0).add(controls.target);
+    for(const g of bodies){                            // enlarge planets on phones; boost the tiniest most
+      const R=g.userData.p.R, s = portrait ? Math.max(R,0.85)/R*1.8 : 1.0;
+      g.scale.setScalar(s);
+    }
+    lastPortrait = portrait;
+  }
   // widen FOV on portrait so the whole (wide) system fits without an extreme pull-back
-  camera.fov = aspect>=1 ? 46 : Math.min(46 + (1/aspect - 1)*26, 74);
-  // distance that fits the outer orbit (Rfit) horizontally & vertically (vertical foreshortened by tilt)
-  const vF=camera.fov*Math.PI/180, Rfit=64, margin = aspect>=1 ? 1.06 : 1.18;
-  const dH=Rfit/(Math.tan(vF/2)*aspect), dV=Rfit/Math.tan(vF/2)*0.8;
-  const dist=Math.min(Math.max(dH,dV)*margin, 380);
+  camera.fov = portrait ? Math.min(46 + (1/aspect - 1)*24, 78) : 46;
+  // fit the outer orbit (Rfit) on the binding axis; the 0.8 floor keeps the desktop framing unchanged
+  const vF=camera.fov*Math.PI/180, Rfit=64, margin = portrait ? 1.12 : 1.06;
   const dir=camera.position.clone().sub(controls.target);
-  if(dir.lengthSq()<1e-6) dir.set(0,0.4,0.92);
-  camera.position.copy(dir.normalize().multiplyScalar(dist).add(controls.target));
-  controls.maxDistance=Math.max(360, dist*1.4);
+  if(dir.lengthSq()<1e-6) dir.set(0,0.41,0.91);
+  dir.normalize();
+  const dH=Rfit/(Math.tan(vF/2)*aspect), dV=Rfit*Math.max(Math.abs(dir.y),0.8)/Math.tan(vF/2);
+  const dist=Math.min(Math.max(dH,dV)*margin, 440);
+  camera.position.copy(dir.multiplyScalar(dist).add(controls.target));
+  controls.maxDistance=Math.max(440, dist*1.4);
   // desktop HUD is heavier on right+bottom → nudge render up-left; mobile HUD is top+bottom → no offset
   if(w>780) camera.setViewOffset(w, h, w*0.075, h*0.06, w, h);
   else camera.clearViewOffset();
@@ -870,6 +885,9 @@ window.__sim={ rev:THREE.REVISION,
   enterEarth:()=>enterSurface(), exitEarth:()=>exitSurface(),
   eclipse:()=>{ const v=eclipseView(state); return {kind:v.kind, cover:+v.cover.toFixed(3),
     sep:+v.sep.toFixed(3), Rs:+v.Rs.toFixed(3), Rm:+v.Rm.toFixed(3), surfaceActive}; },
+  cam:()=>({ pos:camera.position.toArray().map(v=>+v.toFixed(1)), fov:camera.fov,
+    elevationDeg:+(Math.asin(camera.position.y/camera.position.length())*180/Math.PI).toFixed(1),
+    planetScale:bodies[0].scale.x }),
   pixelAt:(fx,fy)=>{const gl=renderer.getContext(),px=new Uint8Array(4);
     gl.readPixels((canvas.width*fx)|0,(canvas.height*fy)|0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);return Array.from(px);},
   pixel:()=>{const gl=renderer.getContext(),px=new Uint8Array(4);
