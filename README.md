@@ -31,9 +31,12 @@ Single self-contained `index.html` — no build step.
   the path marches ~⅓ of the globe west, gamma migrates across the node, and the type evolves
   (Annular → Hybrid → …). Includes an honest accuracy readout — the engine's Saros period vs the real
   6585.32 d — since a point-mass N-body is not a JPL-grade ephemeris.
-- **🔭 Best-viewing predictor.** Next **opposition** for the outer planets (closest, brightest, up all
+- **🔭 Sky-events predictor.** Next **opposition** for the outer planets (closest, brightest, up all
   night — flags Mars' rare "great opposition") and **greatest elongation** for Mercury/Venus (morning vs
-  evening star), with date, distance and an estimated apparent magnitude — all from the live geometry.
+  evening star), with date, distance and an estimated apparent magnitude. Plus **conjunctions (合)** —
+  close planet pairings (the ~20-yr Jupiter–Saturn "Christmas Star"), the Moon's monthly photogenic
+  passes, and multi-planet **alignments (行星連珠)** — all from the live geometry (planets carry real
+  orbital inclinations, so the on-sky separations are realistic).
 - **Cinematic 3D rendering.** Three.js with real NASA-style planet textures, day/night terminators,
   a procedural granulating Sun, bloom, Saturn's ring, Earth's clouds + atmosphere, a Milky-Way
   backdrop and HUD labels that track each planet.

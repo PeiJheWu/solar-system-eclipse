@@ -166,6 +166,9 @@
   .vhead button{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer}
   .vhead button:hover{color:var(--text)}
   #viewList{overflow-y:auto;padding:6px 10px 12px}
+  .vsub{font-size:10px;text-transform:uppercase;letter-spacing:1.6px;color:var(--cyan);
+    padding:12px 8px 5px;border-top:1px solid var(--panel-bd);margin-top:4px}
+  .vsub:first-child{border-top:none;margin-top:0}
   .vrow{display:flex;align-items:center;gap:11px;padding:10px 8px;border-top:1px solid rgba(255,255,255,.06)}
   .vrow:first-child{border-top:none}
   .vp{font-family:var(--mono);font-size:13px;font-weight:600;width:62px;flex:none}
@@ -260,7 +263,7 @@
 </div>
 
 <div id="viewing">
-  <div class="vhead">🔭 Best viewing · 最佳觀測<button id="exitView">✕</button></div>
+  <div class="vhead">🔭 Sky events · 天象<button id="exitView">✕</button></div>
   <div id="viewList"></div>
 </div>
 
@@ -297,15 +300,24 @@ const R2D = 180/Math.PI;
 const SUN_AU=0.0046491, MOON_RAD_AU=1.16138e-5, EARTH_AU=4.2635e-5, PARALLAX=0.95; // physical radii (AU); topocentric Moon shift (deg)
 const fold180 = d => { d=((d%360)+360)%360; return d>180? d-360 : d; };
 
+const ORB={Mercury:[7.0,48],Venus:[3.39,76],Earth:[0,0],Mars:[1.85,49],
+  Jupiter:[1.30,100],Saturn:[2.49,113],Uranus:[0.77,74],Neptune:[1.77,131]};   // [inclination°, node°]
+function rotAxis(vx,vy,vz,nx,ny,nz,c){ const s=Math.sin(c),co=Math.cos(c),dot=nx*vx+ny*vy+nz*vz;  // Rodrigues
+  return [ vx*co+(ny*vz-nz*vy)*s+nx*dot*(1-co),
+           vy*co+(nz*vx-nx*vz)*s+ny*dot*(1-co),
+           vz*co+(nx*vy-ny*vx)*s+nz*dot*(1-co) ]; }
 function makeState(){
   const S={x:new Float64Array(NB),y:new Float64Array(NB),z:new Float64Array(NB),
            vx:new Float64Array(NB),vy:new Float64Array(NB),vz:new Float64Array(NB),m:new Float64Array(NB)};
   S.m[0]=1.0;                                // Sun
-  for(let i=0;i<8;i++){                       // planets on circular orbits — gravity does the rest
+  for(let i=0;i<8;i++){                       // planets on inclined circular orbits — gravity does the rest
     const p=PLANETS[i], a=p.a, th=i*0.85+0.3, v=Math.sqrt(G*(1+p.m)/a), k=i+1;
+    const o=ORB[p.name], inc=o[0]*D2R, nx=Math.cos(o[1]*D2R), ny=Math.sin(o[1]*D2R);  // tilt orbit about its node line
     S.m[k]=p.m;
-    S.x[k]=a*Math.cos(th); S.y[k]=a*Math.sin(th);
-    S.vx[k]=-v*Math.sin(th); S.vy[k]=v*Math.cos(th);
+    const pr=rotAxis(a*Math.cos(th), a*Math.sin(th), 0, nx,ny,0, inc);
+    const wr=rotAxis(-v*Math.sin(th), v*Math.cos(th), 0, nx,ny,0, inc);
+    S.x[k]=pr[0]; S.y[k]=pr[1]; S.z[k]=pr[2];
+    S.vx[k]=wr[0]; S.vy[k]=wr[1]; S.vz[k]=wr[2];
   }
   const e=3, mo=9, phi=0.6, vM=Math.sqrt(G*(S.m[e]+MOON_M)/MOON_A), ci=Math.cos(MOON_INCL), si=Math.sin(MOON_INCL);
   S.m[mo]=MOON_M;                            // Moon: orbit inclined 5.14° (nodes on x-axis) → Sun perturbs it → seasons
@@ -462,6 +474,44 @@ function bestEvent(i){                  // next optimal observation for planet i
       pd=d;
     }
   }
+  return null;
+}
+
+/* ---- Conjunctions (合): close pairings, the Moon's monthly passes, and alignments (行星連珠) ---- */
+const bodyName = si => si===9?'Moon':(si===0?'Sun':PLANETS[si-1].name);
+function geoSep(S,ia,ib){ const e=3;
+  let ax=S.x[ia]-S.x[e],ay=S.y[ia]-S.y[e],az=S.z[ia]-S.z[e]; const da=Math.hypot(ax,ay,az);
+  let bx=S.x[ib]-S.x[e],by=S.y[ib]-S.y[e],bz=S.z[ib]-S.z[e]; const db=Math.hypot(bx,by,bz);
+  return Math.acos(Math.max(-1,Math.min(1,(ax*bx+ay*by+az*bz)/(da*db))))*R2D;
+}
+const geoLonOf=(S,si)=>{ const e=3; return Math.atan2(S.y[si]-S.y[e], S.x[si]-S.x[e])*R2D; };
+function lonSpan(ls){ const a=ls.map(x=>(x%360+360)%360).sort((p,q)=>p-q); let mg=0;
+  for(let i=0;i<a.length;i++){ const nx=i<a.length-1?a[i+1]:a[0]+360; mg=Math.max(mg,nx-a[i]); } return 360-mg; }
+function conjunctions(days){
+  const S=cloneState(state), pl=[1,2,4,5,6,7,8], all=[];
+  for(let a=0;a<pl.length;a++)for(let b=a+1;b<pl.length;b++) all.push([pl[a],pl[b]]);   // planet-planet
+  pl.forEach(p=>all.push([9,p]));                                                        // Moon-planet
+  const prev=all.map(pr=>geoSep(S,pr[0],pr[1])), slope=all.map(()=>0), out=[];
+  let t=0,g=0;
+  while(g++<90000 && t<days){ verlet(S,0.25); t+=0.25;
+    for(let k=0;k<all.length;k++){ const s=geoSep(S,all[k][0],all[k][1]), sl=s-prev[k];
+      if(slope[k]<0 && sl>=0){ const moon=all[k][0]===9; if(prev[k]<(moon?2.5:4))
+        out.push({day:simDay+t-0.25, ai:all[k][0], bi:all[k][1], sep:prev[k], moon}); }
+      slope[k]=sl; prev[k]=s; }
+  }
+  return out.filter(o=>!o.moon).concat(out.filter(o=>o.moon).slice(0,4)).sort((a,b)=>a.day-b.day);
+}
+function greatConjunction(){            // next Jupiter(5)–Saturn(6) — the ~20-yr "Christmas Star"
+  const S=cloneState(state); let prev=geoSep(S,5,6),slope=0,t=0,g=0;
+  while(g++<300000 && t<9000){ verlet(S,0.5); t+=0.5; const s=geoSep(S,5,6),sl=s-prev;
+    if(slope<0&&sl>=0&&prev<5){ return {day:simDay+t-0.5, sep:prev}; } slope=sl; prev=s; }
+  return null;
+}
+function nextAlignment(){               // next tight grouping of the 5 bright planets (行星連珠)
+  const S=cloneState(state), pl=[1,2,4,5,6];
+  let prev=lonSpan(pl.map(si=>geoLonOf(S,si))),slope=0,t=0,g=0;
+  while(g++<90000 && t<1600){ verlet(S,0.5); t+=0.5; const sp=lonSpan(pl.map(si=>geoLonOf(S,si))),sl=sp-prev;
+    if(slope<0&&sl>=0&&prev<80){ return {day:simDay+t-0.5, span:prev}; } slope=sl; prev=sp; }
   return null;
 }
 
@@ -1220,18 +1270,33 @@ addEventListener('resize',()=>{ if(mapActive) drawMap(); });
 
 /* ---- Best viewing panel (opposition / greatest elongation) ---- */
 const viewEl=document.getElementById('viewing'), viewList=document.getElementById('viewList');
+const hex6=c=>'#'+('00000'+c.toString(16)).slice(-6);
+function vrow(day,left,color,title,sub,cls){ const days=Math.max(0,Math.round(day-simDay));
+  return `<div class="vrow${cls||''}"><div class="vp" style="color:${color}">${left}</div>
+    <div class="vmid"><div class="vt">${title}</div><div class="vs">${sub}</div></div>
+    <div class="vcd">${fmtDate(dayToDate(day))}<br><span>in ${days}d</span></div>
+    <button class="vjump" data-day="${day}">Jump</button></div>`; }
 function openViewing(){
+  let html='<div class="vsub">Opposition &amp; elongation</div>';
   const evs=[]; for(let i=0;i<8;i++){ if(i===2) continue; const e=bestEvent(i); if(e) evs.push(e); }
   evs.sort((a,b)=>a.day-b.day);
-  viewList.innerHTML = evs.map(e=>{
-    const days=Math.max(0,Math.round(e.day-simDay)), opp=e.type.toLowerCase().includes('opposition');
-    const sub = opp ? `${e.dist.toFixed(2)} AU away · ${e.detail}` : `${e.val.toFixed(0)}° from Sun · ${e.detail}`;
-    return `<div class="vrow${e.type[0]==='G'&&!opp?'':(e.type.startsWith('GREAT')?' great':'')}">
-      <div class="vp" style="color:#${('00000'+(e.c.toString(16))).slice(-6)}">${e.planet}</div>
-      <div class="vmid"><div class="vt">${e.type}</div><div class="vs">${sub} · ≈ mag ${e.mag.toFixed(1)}</div></div>
-      <div class="vcd">${fmtDate(dayToDate(e.day))}<br><span>in ${days}d</span></div>
-      <button class="vjump" data-day="${e.day}">Jump</button></div>`;
-  }).join('') || '<div class="vrow"><div class="vmid">No events found</div></div>';
+  html += evs.map(e=>{ const opp=e.type.toLowerCase().includes('opposition');
+    const sub=(opp?`${e.dist.toFixed(2)} AU away · ${e.detail}`:`${e.val.toFixed(0)}° from Sun · ${e.detail}`)+` · ≈ mag ${e.mag.toFixed(1)}`;
+    return vrow(e.day, e.planet, hex6(e.c), e.type, sub, e.type.startsWith('GREAT')?' great':''); }).join('');
+
+  html += '<div class="vsub">Conjunctions 合 &amp; alignments</div>';
+  const gc=greatConjunction();
+  if(gc) html += vrow(gc.day,'Jup–Sat','#d9b27e','Great conjunction · 聖誕星',`${gc.sep.toFixed(1)}° apart · ~20-yr event`,' great');
+  const al=nextAlignment();
+  if(al) html += vrow(al.day,'5 planets','#9fd0ff','Planetary alignment · 行星連珠',`bright planets within ${al.span.toFixed(0)}°`,'');
+  const cj=conjunctions(1100).filter(o=>!(o.ai===5&&o.bi===6)).slice(0,12);
+  html += cj.map(o=>{ const A=bodyName(o.ai),B=bodyName(o.bi);
+    return vrow(o.day, o.moon?'Moon':A.slice(0,3)+'–'+B.slice(0,3),
+      o.moon?'#cfd2da':hex6(PLANETS[o.ai-1].c),
+      o.moon?`Moon ♦ ${B}`:`${A} – ${B} conjunction`,
+      `${o.sep.toFixed(1)}° apart${o.moon?' · photogenic':''}`, ''); }).join('');
+
+  viewList.innerHTML = html;
   viewList.querySelectorAll('.vjump').forEach(b=>b.onclick=()=>{ gotoDay(parseFloat(b.dataset.day)); playing=false; playBtn.textContent="▶"; closeViewing(); });
   viewEl.classList.add('show');
 }
