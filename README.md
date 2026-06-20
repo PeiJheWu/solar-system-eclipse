@@ -1,0 +1,76 @@
+# 🌑 Solar System · Eclipse Predictor
+
+A real-time **gravitational N-body simulation** of the Solar System that derives planetary
+orbits from first-principles physics and uses them to **predict solar eclipses** — then lets you
+**stand on Earth and watch one happen**.
+
+> 物理推導的行星軌道，即時推算日食，並可進入地球表面觀測日全食。
+
+**▶ Live demo: https://solar-system-eclipse.vercel.app**
+
+Inspired by the Claude Fable 5 demo *"simulates the solar system and predicts a solar eclipse."*
+Single self-contained `index.html` — no build step.
+
+---
+
+## ✨ Features
+
+- **Real gravity, not faked orbits.** Every body moves under `F = G·m₁·m₂/r²`, integrated with a
+  symplectic velocity-Verlet integrator. Orbital periods, ellipses and perturbations *emerge* from
+  the physics (energy is conserved to ~10⁻¹⁵ over years of simulated time).
+- **Physically-derived eclipse forecast.** The Moon's 5.14°-inclined orbit is perturbed by the Sun,
+  so its nodes regress (~18.6 yr) and **eclipse seasons emerge on their own**. Upcoming eclipses are
+  found by integrating the model forward and classified Total / Annular / Partial.
+- **Cinematic 3D rendering.** Three.js with real NASA-style planet textures, day/night terminators,
+  a procedural granulating Sun, bloom, Saturn's ring, Earth's clouds + atmosphere, a Milky-Way
+  backdrop and HUD labels that track each planet.
+- **🌍 Enter Earth.** Click the Earth (or the globe button) to drop onto the surface and watch the
+  eclipse unfold — the Moon crossing the Sun, the sky darkening, stars appearing, the corona and the
+  diamond-ring — over a **sci-fi Egypt** horizon (glowing pyramids, light beam, holographic sands).
+  Total vs. annular is decided by the Moon's real distance in the sim.
+- **Responsive.** Adapts framing and HUD for desktop and mobile.
+
+## 🎮 Controls
+
+| Action | Control |
+| --- | --- |
+| Orbit camera | drag |
+| Zoom | scroll / pinch |
+| Play / pause | `space` or ⏸ |
+| Step ±1 day | `←` / `→` |
+| Jump to next eclipse | ⏭ |
+| Enter Earth (surface view) | 🌍 button, or click the Earth |
+| Time speed | slider |
+
+## 🛠 Tech
+
+- **Three.js r160** (WebGL) via ESM import-map — orbital scene, bloom post-processing, shaders
+- **Canvas 2D** — the surface eclipse view and the node-geometry diagram
+- **Vanilla JS** N-body engine (AU · days · solar-mass units, `G` = Gaussian *k²*)
+- No framework, no bundler — just open `index.html`
+
+## 🚀 Run locally
+
+It's a single static file. Either open `index.html` directly, or serve it:
+
+```bash
+npx serve .
+# then open http://localhost:3000
+```
+
+> Note: planet textures and Three.js are loaded from a CDN, so an internet connection is required.
+
+## 🔬 How the eclipse prediction works
+
+1. Initialise Sun + 8 planets on circular orbits and the Moon on an inclined orbit; integrate gravity.
+2. Each step, compute the Moon's geocentric elongation from the Sun and its ecliptic latitude.
+3. A **new moon** is a conjunction (elongation → 0); it's a **solar eclipse** when the Moon's
+   latitude is small enough that the lunar shadow can reach Earth.
+4. Because the Sun perturbs the tilted lunar orbit, eclipses naturally cluster into seasons ~6 months
+   apart and drift earlier each year — exactly as they do in reality.
+
+## 🙏 Credits
+
+- Planet & Moon textures from [jeromeetienne/threex.planets](https://github.com/jeromeetienne/threex.planets)
+- Built with [Three.js](https://threejs.org) · deployed on [Vercel](https://vercel.com)
+- Created with [Claude Code](https://claude.com/claude-code)
