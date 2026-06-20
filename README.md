@@ -25,6 +25,12 @@ Single self-contained `index.html` — no build step.
   **Total / Partial / Penumbral**.
 - **Lunar eclipses too.** Earth's shadow cone (umbra + penumbra) is rendered in 3D; from the surface
   you watch the full Moon slide into Earth's shadow and turn a coppery **"blood moon"** at totality.
+- **🗺 Totality path (全食帶).** The Moon's umbra is projected onto a rotating Earth (obliquity +
+  sidereal spin) to draw the narrow ground track of totality — *where you'd have to stand*.
+- **Saros cycle explorer.** Step ±1 Saros (18 yr 11 d) and watch a series unfold: dates drift +11 days,
+  the path marches ~⅓ of the globe west, gamma migrates across the node, and the type evolves
+  (Annular → Hybrid → …). Includes an honest accuracy readout — the engine's Saros period vs the real
+  6585.32 d — since a point-mass N-body is not a JPL-grade ephemeris.
 - **Cinematic 3D rendering.** Three.js with real NASA-style planet textures, day/night terminators,
   a procedural granulating Sun, bloom, Saturn's ring, Earth's clouds + atmosphere, a Milky-Way
   backdrop and HUD labels that track each planet.

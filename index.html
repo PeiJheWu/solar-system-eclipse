@@ -130,6 +130,31 @@
   body.surface #banner,body.surface #clock,body.surface .hint{display:none!important}
   body.surface #controls{z-index:7}
 
+  /* ---- totality-path & Saros map ---- */
+  #map{position:fixed;inset:0;z-index:9;opacity:0;pointer-events:none;transition:opacity .35s ease;
+    background:radial-gradient(120% 100% at 50% 0%, #0a1020, #04060e 70%);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;padding:54px 18px 92px}
+  #map.show{opacity:1;pointer-events:auto}
+  #mapTitle{position:absolute;top:16px;left:0;right:0;text-align:center;font-family:var(--mono);
+    font-size:14px;letter-spacing:2px;text-transform:uppercase;color:var(--text)}
+  #mapTitle #mapType{color:var(--amber);margin-left:8px}
+  #mapCanvas{width:min(100%,1000px);max-height:64vh;aspect-ratio:2/1;border:1px solid var(--panel-bd);
+    border-radius:10px;background:#060912;box-shadow:0 10px 50px rgba(0,0,0,.6)}
+  #sarosBar{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;align-items:center;
+    gap:14px;background:var(--panel);border:1px solid var(--panel-bd);border-radius:14px;padding:10px 14px;
+    backdrop-filter:blur(14px);box-shadow:0 8px 40px rgba(0,0,0,.5)}
+  #sarosBar button{background:rgba(95,227,255,.07);border:1px solid var(--panel-bd);color:var(--text);
+    padding:9px 13px;border-radius:10px;cursor:pointer;font-size:12px;font-family:var(--mono);transition:.15s}
+  #sarosBar button:hover{background:rgba(95,227,255,.18);border-color:var(--cyan)}
+  #sarosInfo{font-family:var(--mono);text-align:center;min-width:188px}
+  #sarosInfo .sr1{font-size:13px;color:var(--text)}
+  #sarosInfo .sr2{font-size:10.5px;color:var(--muted);margin-top:3px}
+  #exitMap{position:absolute;top:14px;right:16px;z-index:10;pointer-events:auto;cursor:pointer;
+    background:rgba(10,14,26,.6);border:1px solid var(--panel-bd);color:var(--text);
+    padding:8px 13px;border-radius:10px;font-size:12px;backdrop-filter:blur(10px)}
+  #exitMap:hover{border-color:var(--cyan);background:rgba(95,227,255,.15)}
+  @media (max-width:780px){ #sarosInfo{min-width:128px} #mapCanvas{max-height:52vh} }
+
   @media (max-width:780px){
     #title,#forecast,#diagwrap{display:none}
     .hint{display:none}
@@ -187,14 +212,26 @@
   </div>
   <button id="jump" title="Jump to next eclipse">⏭</button>
   <button id="earthBtn" title="Enter Earth — watch the eclipse from the surface">🌍</button>
+  <button id="mapBtn" title="Totality path & Saros cycle">🗺</button>
 </div>
 
-<div class="hint">drag = orbit · scroll = zoom · space = play/pause · click 🌍 Earth = surface view</div>
+<div class="hint">drag = orbit · scroll = zoom · space = play/pause · 🌍 surface · 🗺 path & Saros</div>
 
 <div id="surface">
   <canvas id="surfaceCanvas"></canvas>
   <div id="surfaceInfo"><div class="k" id="sKind">—</div><div class="c" id="sCov">—</div></div>
   <button id="exitEarth">✕ 離開地球 · Exit to orbit</button>
+</div>
+
+<div id="map">
+  <div id="mapTitle">Totality path · 全食帶<span id="mapType"></span></div>
+  <canvas id="mapCanvas"></canvas>
+  <div id="sarosBar">
+    <button id="sarosPrev" title="Previous Saros (−18y 11d)">◀ Saros</button>
+    <div id="sarosInfo"><div class="sr1">—</div><div class="sr2">—</div></div>
+    <button id="sarosNext" title="Next Saros (+18y 11d)">Saros ▶</button>
+  </div>
+  <button id="exitMap">✕ Exit</button>
 </div>
 
 <script type="importmap">
@@ -305,6 +342,54 @@ function lunarType(a){
   if(b < a.umbra+a.Rm) return "Partial";
   if(b < a.pen  +a.Rm) return "Penumbral";
   return null;
+}
+
+/* ---- Earth orientation → geography of the Moon's shadow (totality path) & Saros ---- */
+const SIDEREAL_DAY=0.997269, OBLIQUITY=23.44*D2R, SAROS_REAL=6585.3211;   // days
+const EAXIS=[0,Math.sin(OBLIQUITY),Math.cos(OBLIQUITY)];                   // Earth spin axis (ecliptic frame)
+const E1=[1,0,0], E2=[0,Math.cos(OBLIQUITY),-Math.sin(OBLIQUITY)];        // equatorial basis ⟂ axis
+const dot3=(a,x,y,z)=>a[0]*x+a[1]*y+a[2]*z;
+const wrapLon=d=>((d+180)%360+360)%360-180;
+function geo(nx,ny,nz, day){            // unit dir (ecliptic) → geographic {lat,lon} (deg)
+  const lat=Math.asin(Math.max(-1,Math.min(1,dot3(EAXIS,nx,ny,nz))))*R2D;
+  const lonI=Math.atan2(dot3(E2,nx,ny,nz), dot3(E1,nx,ny,nz))*R2D;
+  return { lat, lon:wrapLon(lonI - 360*day/SIDEREAL_DAY) };
+}
+function dirOf(lat,lon,day){            // geographic → unit dir (ecliptic), inverse of geo()
+  const li=(lon + 360*day/SIDEREAL_DAY)*D2R, la=lat*D2R, cl=Math.cos(la);
+  return [ cl*(Math.cos(li)*E1[0]+Math.sin(li)*E2[0])+Math.sin(la)*EAXIS[0],
+           cl*(Math.cos(li)*E1[1]+Math.sin(li)*E2[1])+Math.sin(la)*EAXIS[1],
+           cl*(Math.cos(li)*E1[2]+Math.sin(li)*E2[2])+Math.sin(la)*EAXIS[2] ];
+}
+function umbraGround(S, day){           // where the shadow axis (Sun→Moon) meets Earth's surface
+  const e=3, mo=9;
+  let dx=S.x[mo]-S.x[0], dy=S.y[mo]-S.y[0], dz=S.z[mo]-S.z[0]; const dd=Math.hypot(dx,dy,dz); dx/=dd;dy/=dd;dz/=dd;
+  const fx=S.x[mo]-S.x[e], fy=S.y[mo]-S.y[e], fz=S.z[mo]-S.z[e];
+  const b=fx*dx+fy*dy+fz*dz, c=fx*fx+fy*fy+fz*fz-EARTH_AU*EARTH_AU, disc=b*b-c;
+  if(disc<0) return {hit:false};
+  const s=-b-Math.sqrt(disc), px=fx+s*dx, py=fy+s*dy, pz=fz+s*dz, pl=Math.hypot(px,py,pz);
+  return Object.assign({hit:true}, geo(px/pl,py/pl,pz/pl, day));
+}
+function subSolar(S, day){ const e=3; let x=S.x[0]-S.x[e],y=S.y[0]-S.y[e],z=S.z[0]-S.z[e]; const d=Math.hypot(x,y,z); return geo(x/d,y/d,z/d, day); }
+function sunDirOf(S){ const e=3; let x=S.x[0]-S.x[e],y=S.y[0]-S.y[e],z=S.z[0]-S.z[e]; const d=Math.hypot(x,y,z); return [x/d,y/d,z/d]; }
+
+function totalityPath(){                // central-eclipse ground track around the current instant
+  const S=cloneState(state); let day=simDay;
+  for(let i=0;i<110;i++){ verlet(S,-0.001); day-=0.001; }
+  const pts=[];
+  for(let i=0;i<220;i++){ verlet(S,0.001); day+=0.001;
+    if(Math.abs(angles(S).elong)>1.3) continue;
+    const u=umbraGround(S,day); if(u.hit) pts.push([u.lon,u.lat]);
+  }
+  return pts;
+}
+function measureSaros(){                // engine's synodic month & Saros period (vs reality)
+  const S=cloneState(state); let pe=geom(S).elong, t=0, nm=[];
+  while(nm.length<8 && t<280){ verlet(S,0.01); t+=0.01; const e=geom(S).elong;
+    if(pe<0 && e>=0 && Math.abs(pe)<90 && Math.abs(e)<90){ const frac=pe/(pe-e); nm.push(t-0.01*(1-frac)); }  // interpolate crossing
+    pe=e; }
+  let syn=29.5306; if(nm.length>=2){ let s=0; for(let i=1;i<nm.length;i++) s+=nm[i]-nm[i-1]; syn=s/(nm.length-1); }
+  return { synodic:syn, saros:223*syn };
 }
 
 function cloneState(S){ const C={}; for(const k of ['x','y','z','vx','vy','vz','m']) C[k]=S[k].slice(); return C; }
@@ -943,7 +1028,7 @@ function nextGoodEclipse(){                        // next deep, watchable eclip
   const list=forecastSim(state,16);
   return list.find(e=> e.eType==='solar' ? Math.abs(e.beta)<0.9 : (e.type==='Total'||e.type==='Partial')) || list[0];
 }
-function gotoDay(tgt){ let g=0; while(simDay<tgt && g++<500000) advance(tgt-simDay); lastForecast=-1e9; }
+function gotoDay(tgt){ let g=0; while(Math.abs(simDay-tgt)>1e-3 && g++<2000000) advance(tgt-simDay); lastForecast=-1e9; }
 function enterSurface(){
   if(surfaceActive) return;
   surfaceActive=true; document.body.classList.add('surface'); surfaceEl.classList.add('show');
@@ -964,6 +1049,86 @@ canvas.addEventListener('pointerup',e=>{
   _pt.set((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1); _ray.setFromCamera(_pt,camera);
   if(_ray.intersectObject(bodies[2],true).length) enterSurface();
 });
+
+/* ============================================================
+   TOTALITY PATH (全食帶) + SAROS CYCLE explorer
+   ============================================================ */
+const mapEl=document.getElementById('map'), mCv=document.getElementById('mapCanvas'), mxc=mCv.getContext('2d');
+let mapActive=false, sarosHist=[], sarosMember=0;
+const projX=(lon,W)=>(lon+180)/360*W, projY=(lat,H)=>(90-lat)/180*H;
+
+function drawPathOn(pts,color,width,alpha,W,H){
+  if(!pts||pts.length<2) return;
+  mxc.strokeStyle=color; mxc.lineWidth=width; mxc.globalAlpha=alpha; mxc.lineJoin="round"; mxc.beginPath();
+  let px=null;
+  for(let k=0;k<pts.length;k++){ const x=projX(pts[k][0],W), y=projY(pts[k][1],H);
+    if(k===0||px===null||Math.abs(x-px)>W*0.5){ mxc.stroke(); mxc.beginPath(); mxc.moveTo(x,y); } else mxc.lineTo(x,y);
+    px=x; }
+  mxc.stroke(); mxc.globalAlpha=1;
+}
+function drawMap(){
+  const dpr=Math.min(devicePixelRatio||1,2), W=mCv.clientWidth, H=mCv.clientHeight;
+  if(mCv.width!==(W*dpr|0)){ mCv.width=W*dpr; mCv.height=H*dpr; mxc.setTransform(dpr,0,0,dpr,0,0); }
+  mxc.clearRect(0,0,W,H); mxc.fillStyle="#070b16"; mxc.fillRect(0,0,W,H);
+  // day / night shading (coarse) from the Sun direction
+  const sd=sunDirOf(state), cols=64, rows=32;
+  for(let i=0;i<cols;i++) for(let j=0;j<rows;j++){
+    const lon=-180+(i+0.5)/cols*360, lat=90-(j+0.5)/rows*180, d=dirOf(lat,lon,simDay);
+    const lit=d[0]*sd[0]+d[1]*sd[1]+d[2]*sd[2];
+    if(lit>0){ mxc.fillStyle=`rgba(64,104,150,${0.05+0.11*lit})`; mxc.fillRect(i/cols*W-0.5,j/rows*H-0.5,W/cols+1,H/rows+1); }
+  }
+  // graticule
+  mxc.strokeStyle="rgba(120,150,200,.12)"; mxc.lineWidth=1;
+  for(let lon=-180;lon<=180;lon+=30){ const x=projX(lon,W); mxc.beginPath(); mxc.moveTo(x,0); mxc.lineTo(x,H); mxc.stroke(); }
+  for(let lat=-60;lat<=60;lat+=30){ const y=projY(lat,H); mxc.beginPath(); mxc.moveTo(0,y); mxc.lineTo(W,y); mxc.stroke(); }
+  mxc.strokeStyle="rgba(140,170,210,.22)"; mxc.beginPath(); mxc.moveTo(0,H/2); mxc.lineTo(W,H/2); mxc.stroke(); // equator
+  // sub-solar point
+  const ss=subSolar(state,simDay), sx0=projX(ss.lon,W), sy0=projY(ss.lat,H);
+  mxc.fillStyle="rgba(255,220,120,.95)"; mxc.beginPath(); mxc.arc(sx0,sy0,4,0,TAU); mxc.fill();
+  mxc.strokeStyle="rgba(255,220,120,.4)"; mxc.lineWidth=1; mxc.beginPath(); mxc.arc(sx0,sy0,10,0,TAU); mxc.stroke();
+  // Saros series: older members faint (watch them march west), current bright
+  sarosHist.forEach((h,i)=>{ const cur=i===sarosHist.length-1, age=sarosHist.length-1-i;
+    if(cur){ drawPathOn(h.path,"rgba(255,180,90,0.5)",9,0.5,W,H); drawPathOn(h.path,"#ffd14d",4,1,W,H); }
+    else drawPathOn(h.path,"#ff8a4d",2.5,Math.max(0.12,0.55-age*0.09),W,H); });
+}
+function recordSaros(){
+  const a=angles(state), path=totalityPath();
+  const lon0 = path.length ? path[path.length>>1][0] : null;
+  const ty = solarType(a)||'Partial';
+  sarosHist.push({path, gamma:a.lat, date:fmtDate(dayToDate(simDay)), member:sarosMember, type:ty, lon0});
+  if(sarosHist.length>6) sarosHist.shift();
+  // readouts
+  const per=measureSaros().saros;
+  let shift='—';
+  if(sarosHist.length>=2){ const A=sarosHist[sarosHist.length-2].lon0, B=lon0;
+    if(A!=null&&B!=null){ const d=wrapLon(B-A); shift=(d>0?'+':'')+d.toFixed(0)+'°'; } }
+  document.getElementById('mapType').textContent='· '+ty+' (solar)';
+  document.querySelector('#sarosInfo .sr1').textContent=`Saros member ${sarosMember} · ${fmtDate(dayToDate(simDay))} · ${ty}`;
+  document.querySelector('#sarosInfo .sr2').textContent=`γ ${a.lat.toFixed(2)}°  ·  Δlon/Saros ${shift}  ·  engine Saros ≈ ${per.toFixed(0)}d (real 6585)`;
+  drawMap();
+}
+function startSaros(){
+  sarosHist=[]; sarosMember=0;
+  const l=forecastSim(state,16); const e=l.find(x=>x.eType==='solar'&&x.type!=='Partial')||l.find(x=>x.eType==='solar');
+  if(e) gotoDay(e.day);
+  recordSaros();
+}
+function sarosStep(dir){
+  const target=simDay + dir*SAROS_REAL;            // one Saros (same eclipse season)
+  gotoDay(target-70);
+  const cands=forecastSim(state,12).filter(x=>x.eType==='solar');
+  let best=null,bd=1e9; for(const c of cands){ const dd=Math.abs(c.day-target); if(dd<bd){bd=dd;best=c;} } // nearest the target
+  if(best) gotoDay(best.day);
+  sarosMember+=dir; recordSaros();
+}
+function openMap(){ if(mapActive) return; mapActive=true; playing=false; playBtn.textContent="▶";
+  mapEl.classList.add('show'); startSaros(); }
+function closeMap(){ mapActive=false; mapEl.classList.remove('show'); }
+document.getElementById('mapBtn').onclick=openMap;
+document.getElementById('exitMap').onclick=closeMap;
+document.getElementById('sarosNext').onclick=()=>sarosStep(1);
+document.getElementById('sarosPrev').onclick=()=>sarosStep(-1);
+addEventListener('resize',()=>{ if(mapActive) drawMap(); });
 
 /* ---- debug hook for verification ---- */
 window.__sim={ rev:THREE.REVISION,
@@ -992,7 +1157,17 @@ window.__sim={ rev:THREE.REVISION,
   pixelAt:(fx,fy)=>{const gl=renderer.getContext(),px=new Uint8Array(4);
     gl.readPixels((canvas.width*fx)|0,(canvas.height*fy)|0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);return Array.from(px);},
   pixel:()=>{const gl=renderer.getContext(),px=new Uint8Array(4);
-    gl.readPixels(canvas.width/2,canvas.height/2,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);return Array.from(px);} };
+    gl.readPixels(canvas.width/2,canvas.height/2,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);return Array.from(px);},
+  saros:()=>measureSaros(),
+  path:()=>{ const p=totalityPath(); return {n:p.length, first:p[0], mid:p[p.length>>1], last:p[p.length-1]}; },
+  umbra:()=>umbraGround(state,simDay),
+  goSolar:()=>{ const l=forecastSim(state,16); const e=l.find(x=>x.eType==='solar'&&x.type!=='Partial')||l.find(x=>x.eType==='solar'); if(e) gotoDay(e.day-0.02); return e?{date:fmtDate(dayToDate(e.day)),type:e.type}:null; },
+  rates:()=>{ const S=cloneState(state);
+    // sidereal month: Moon geocentric longitude return; year: Earth heliocentric return
+    let t=0; const ml0=Math.atan2(S.y[9]-S.y[3],S.x[9]-S.x[3]); let pm=ml0,sid=0;
+    while(t<40){ verlet(S,0.01); t+=0.01; const m=Math.atan2(S.y[9]-S.y[3],S.x[9]-S.x[3]);
+      if(pm<0&&m>=0&&Math.abs(pm)<1){ sid=t; break;} pm=m; }
+    return {siderealMonth:+sid.toFixed(3)}; } };
 
 requestAnimationFrame(tick);
 </script>
