@@ -25,7 +25,7 @@
       radial-gradient(140% 120% at 78% 88%, rgba(120,40,150,.14), transparent 55%),
       radial-gradient(100% 100% at 50% 50%, #05060f 30%, #020308 100%);
   }
-  #gl{position:fixed;inset:0;width:100%;height:100%;z-index:1;display:block}
+  #gl{position:fixed;inset:0;width:100%;height:100%;z-index:1;display:block;touch-action:none}
   /* cinematic vignette + faint scanlines */
   #grade{position:fixed;inset:0;z-index:2;pointer-events:none;
     box-shadow:inset 0 0 240px 60px rgba(0,0,0,.7), inset 0 0 60px rgba(0,0,0,.4);
@@ -1038,7 +1038,12 @@ controls.enableDamping = true; controls.dampingFactor = 0.06;
 controls.enablePan = false;
 controls.minDistance = 14; controls.maxDistance = 260;
 controls.autoRotate = true; controls.autoRotateSpeed = 0.16;
+controls.rotateSpeed = 0.85; controls.zoomSpeed = 1.0;
 controls.target.set(0,0,0);
+// touch devices: calmer rotation, gentler pinch-zoom, and no ambient spin fighting the user
+if(window.matchMedia && matchMedia('(pointer: coarse)').matches){
+  controls.autoRotate = false; controls.rotateSpeed = 0.55; controls.zoomSpeed = 0.7;
+}
 
 /* ---- textures (real planet maps via jsDelivr · CORS-safe) ---- */
 const BASE="https://cdn.jsdelivr.net/gh/jeromeetienne/threex.planets/images/";
