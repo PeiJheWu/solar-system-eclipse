@@ -241,7 +241,7 @@
   @keyframes agSweep{to{top:100%}}
   #agClose{position:absolute;top:18px;right:22px;z-index:22;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;transition:.15s}
   #agClose:hover{color:var(--text);text-shadow:0 0 12px var(--accent)}
-  .agCard{position:relative;width:min(95vw,760px);max-height:86vh;display:flex;flex-direction:column;overflow:hidden;
+  .agCard{position:relative;width:min(95vw,760px);max-height:82vh;display:flex;flex-direction:column;overflow:hidden;
     border:1px solid color-mix(in srgb,var(--accent) 55%, transparent);border-radius:16px;
     background:linear-gradient(180deg,rgba(10,16,28,.93),rgba(6,10,18,.96));
     box-shadow:0 0 70px rgba(0,0,0,.65), 0 0 46px color-mix(in srgb,var(--accent) 20%, transparent), inset 0 0 60px rgba(0,0,0,.4);
@@ -416,7 +416,8 @@
     #planetFacts h2{font-size:31px}
     #planetNav{left:50%;bottom:14px}
     #agency{padding:10px}
-    .agCard{max-height:90vh}
+    .agCard{max-height:82vh}
+    .agNav{bottom:12px}
     .agHero{height:142px}
     .agHero .agLogo{height:32px;max-width:108px;top:12px;right:12px}
     .agHeroBar{left:16px;right:16px;gap:13px}
@@ -441,8 +442,10 @@
     #clock{top:10px;left:10px;right:10px;min-width:0;padding:10px 14px}
     #clock .date{font-size:18px}
     #clock .grid{font-size:10.5px;gap:3px 12px}
-    #controls{left:50%;right:auto;transform:translateX(-50%);bottom:14px;padding:11px 16px;gap:12px}
-    #controls .speed{min-width:128px}
+    #controls{left:7px;right:7px;transform:none;bottom:12px;padding:9px 10px;gap:8px;
+      flex-wrap:wrap;justify-content:center}
+    #controls .speed{min-width:0;flex:1 1 100%;order:5;margin-top:1px}
+    #controls button{font-size:17px}
     #banner{font-size:11px;padding:8px 16px;white-space:nowrap}
   }
 </style>
