@@ -69,7 +69,8 @@ Single self-contained `index.html` — no build step.
 - **📡 Live Mission Feed + agency dossiers.** A 📡 panel with two tabs. **Live feed** pulls the
   **latest real space news** (aggregated across NASA, SpaceX, ESA and more via the Spaceflight News
   API) and the **next upcoming launches** with live countdowns (The Space Devs · Launch Library 2),
-  filterable by NASA / SpaceX / ESA / China / Moon / Mars. **Agencies** opens a cinematic, accent-themed
+  filterable by NASA / SpaceX / ESA / China / Moon / Mars. A persistent **agency dock down the left edge**
+  (and an **Agencies** tab in the panel) opens a cinematic, accent-themed
   **profile dossier** for each major organisation — NASA, ESA, SpaceX, Roscosmos, CNSA, JAXA, ISRO,
   Blue Origin, Rocket Lab — with a glowing emblem, the **official logo**, founding/HQ/type, a milestones
   timeline, **a gallery of historical mission photos with captions** (Wikimedia Commons), and current
