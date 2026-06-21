@@ -1893,6 +1893,10 @@ document.getElementById('exitNews').onclick=closeNews;
 
 /* ---- space agencies & companies — cinematic profile dossiers ---- */
 const AGENCIES=[
+  {acro:"SPX",name:"SpaceX",flag:"🇺🇸",country:"United States",accent:"#aab6cc",founded:"2002",hq:"Hawthorne / Starbase",type:"Private",cls:"Private aerospace company",
+    intro:"A private American company that pioneered orbital-class rocket reuse. SpaceX flies the workhorse Falcon 9, operates the Starlink internet constellation, carries NASA astronauts in Dragon, and is developing the fully-reusable Starship.",
+    milestones:[["2002","Founded by Elon Musk"],["2008","Falcon 1 — first privately-developed liquid rocket to orbit"],["2012","Dragon — first commercial craft to dock with the ISS"],["2015","First orbital booster landing"],["2020","Crew Dragon Demo-2 — first private crewed orbital flight"],["2023–25","Starship orbital flight-test campaign"]],
+    programs:["Falcon 9 / Heavy","Crew & Cargo Dragon","Starlink","Starship / Super Heavy"], site:"https://www.spacex.com"},
   {acro:"NASA",name:"NASA",flag:"🇺🇸",country:"United States",accent:"#3b82f6",founded:"1958",hq:"Washington, D.C.",type:"Government",cls:"National space agency · civil",
     intro:"The United States' civil space agency, responsible for the nation's civilian spaceflight, aeronautics and space science. NASA has led human exploration from Mercury and Apollo to the International Space Station and the Artemis return to the Moon.",
     milestones:[["1958","NASA established by the National Aeronautics and Space Act"],["1969","Apollo 11 — first crewed Moon landing"],["1977","Voyager 1 & 2 begin the grand tour of the outer planets"],["1990","Hubble Space Telescope deployed"],["2012","Curiosity lands in Gale Crater, Mars"],["2021","James Webb Space Telescope launched"],["2022","Artemis I flies an uncrewed Orion around the Moon"]],
@@ -1901,10 +1905,6 @@ const AGENCIES=[
     intro:"Europe's gateway to space — a 22-member intergovernmental organisation coordinating the continent's space science, exploration and independent launch capability, from the Ariane rockets to flagship deep-space science missions.",
     milestones:[["1975","ESA founded from ESRO and ELDO"],["1979","First Ariane launch from Kourou"],["2004","Rosetta launched toward comet 67P"],["2014","Philae makes the first soft landing on a comet"],["2021","Ariane 5 launches the JWST (with NASA & CSA)"],["2023","JUICE departs for Jupiter's icy moons"]],
     programs:["Ariane 6","JUICE","Euclid","Gaia","ExoMars","Copernicus","Vega-C"], site:"https://www.esa.int"},
-  {acro:"SPX",name:"SpaceX",flag:"🇺🇸",country:"United States",accent:"#aab6cc",founded:"2002",hq:"Hawthorne / Starbase",type:"Private",cls:"Private aerospace company",
-    intro:"A private American company that pioneered orbital-class rocket reuse. SpaceX flies the workhorse Falcon 9, operates the Starlink internet constellation, carries NASA astronauts in Dragon, and is developing the fully-reusable Starship.",
-    milestones:[["2002","Founded by Elon Musk"],["2008","Falcon 1 — first privately-developed liquid rocket to orbit"],["2012","Dragon — first commercial craft to dock with the ISS"],["2015","First orbital booster landing"],["2020","Crew Dragon Demo-2 — first private crewed orbital flight"],["2023–25","Starship orbital flight-test campaign"]],
-    programs:["Falcon 9 / Heavy","Crew & Cargo Dragon","Starlink","Starship / Super Heavy"], site:"https://www.spacex.com"},
   {acro:"РК",name:"Roscosmos",flag:"🇷🇺",country:"Russia",accent:"#e0654a",founded:"1992",hq:"Moscow, Russia",type:"Government",cls:"State space corporation",
     intro:"Russia's state space corporation, heir to the Soviet programme that achieved many of spaceflight's firsts. It operates the long-serving Soyuz crew vehicle and Progress cargo craft and is a core partner on the International Space Station.",
     milestones:[["1957","Sputnik 1 — first artificial satellite"],["1961","Yuri Gagarin — first human in space"],["1963","Valentina Tereshkova — first woman in space"],["1971","Salyut 1 — first space station"],["1986","Mir station core module launched"],["Today","Soyuz & Progress sustain ISS crew rotation"]],
