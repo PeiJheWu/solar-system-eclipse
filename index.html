@@ -192,8 +192,11 @@
   .ghead button{position:absolute;right:16px;top:-2px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer}
   #globeCanvas{width:min(86vw,70vh);height:min(86vw,70vh);touch-action:none;cursor:crosshair}
   #globeHint{position:absolute;top:46px;left:0;right:0;text-align:center;font-size:11px;color:var(--muted)}
-  #globeCities{position:absolute;top:70px;left:0;right:0;display:flex;flex-wrap:wrap;gap:7px;justify-content:center;padding:0 12px;z-index:11}
-  #globeCities button{background:rgba(95,227,255,.08);border:1px solid var(--panel-bd);color:var(--text);
+  #globeCities{position:absolute;top:68px;left:0;right:0;display:flex;flex-wrap:nowrap;gap:7px;justify-content:flex-start;
+    padding:4px 14px;z-index:11;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;-webkit-overflow-scrolling:touch;
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent);
+    mask-image:linear-gradient(90deg,transparent,#000 24px,#000 calc(100% - 24px),transparent)}
+  #globeCities button{background:rgba(95,227,255,.08);border:1px solid var(--panel-bd);color:var(--text);flex:0 0 auto;white-space:nowrap;
     padding:6px 11px;border-radius:999px;cursor:pointer;font-size:11.5px;font-family:var(--mono);transition:.15s}
   #globeCities button:hover{background:rgba(95,227,255,.2);border-color:var(--cyan)}
   #globeBar{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;
@@ -1049,9 +1052,12 @@ function eclipseView(S){
     const Rs=Math.atan(SUN_AU/ds)*R2D, Rm=Math.atan(MOON_RAD_AU/dm)*R2D;
     sx/=ds;sy/=ds;sz/=ds; mx/=dm;my/=dm;mz/=dm;
     const sep=Math.acos(Math.max(-1,Math.min(1,sx*mx+sy*my+sz*mz)))*R2D;
-    let ex=-sy,ey=sx,ez=0; const de=Math.hypot(ex,ey)||1; ex/=de;ey/=de;            // east = up×sun
-    const nx=sy*ez-sz*ey, ny=sz*ex-sx*ez, nz=sx*ey-sy*ex;                            // north = sun×east
-    const mA=mx*sx+my*sy+mz*sz, mE=mx*ex+my*ey+mz*ez, mN=mx*nx+my*ny+mz*nz;          // Moon offset from Sun
+    const up=dirOf(observer.lat,observer.lon,simDay);                               // local zenith → render in the site's alt-az
+    let ex=up[1]*sz-up[2]*sy, ey=up[2]*sx-up[0]*sz, ez=up[0]*sy-up[1]*sx;           // east (horizontal) = zenith × sun
+    let de=Math.hypot(ex,ey,ez); if(de<1e-3){ ex=-sy;ey=sx;ez=0; de=Math.hypot(ex,ey,ez)||1; }  // Sun near zenith → fallback
+    ex/=de;ey/=de;ez/=de;
+    const nx=sy*ez-sz*ey, ny=sz*ex-sx*ez, nz=sx*ey-sy*ex;                            // "up" in view = sun × east (toward zenith)
+    const mA=mx*sx+my*sy+mz*sz, mE=mx*ex+my*ey+mz*ez, mN=mx*nx+my*ny+mz*nz;          // Moon offset (azimuth, altitude)
     const cover=Math.min(1, lensArea(Rs,Rm,sep)/(Math.PI*Rs*Rs));
     let kind="—"; if(sep<Rs+Rm){ if(sep<=Math.abs(Rs-Rm)){ const d=Rm-Rs; kind=Math.abs(d)<0.004?"Hybrid":(d>=0?"Total":"Annular"); } else kind="Partial"; }
     const sunAlt=sunAltitude(S,simDay);
@@ -1115,7 +1121,11 @@ const craters=[]; for(let i=0;i<14;i++){ const rr=Math.random()*0.78, aa=Math.ra
 // Wikimedia Commons (display only; the canvas may taint cross-origin, which is fine for drawing).
 const PHOTO_SRC={ egypt:'All_Gizah_Pyramids.jpg', paris:"Paris_vue_d%27ensemble_tour_Eiffel.jpg",
   newyork:'Lower_Manhattan_skyline_-_June_2017.jpg', tokyo:'Skyscrapers_of_Shinjuku_2009_January.jpg',
-  london:'Palace_of_Westminster,_London_-_Feb_2007.jpg' };
+  london:'Palace_of_Westminster,_London_-_Feb_2007.jpg', dubai:'Dubai_skyline_2015.jpg',
+  hongkong:'Hong_Kong_Skyline_Restitch_-_Dec_2007.jpg', singapore:'1_singapore_city_skyline_dusk_panorama_2011.jpg',
+  istanbul:'Hagia_Sophia_Mars_2013.jpg', moscow:"Saint_Basil%27s_Cathedral_and_the_Red_Square.jpg",
+  sydney:'Sydney_Australia._(21339175489).jpg', sf:'Golden_Gate_Bridge_as_seen_from_Battery_East.jpg',
+  toronto:'Toronto_-_ON_-_Toronto_Harbourfront.jpg' };
 const THEME_PHOTO={};
 function cityPhoto(){ const th=(observer&&observer.theme)||'', f=PHOTO_SRC[th]; if(!f) return null;
   let im=THEME_PHOTO[th]; if(!im){ im=new Image(); im.src='https://commons.wikimedia.org/wiki/Special:FilePath/'+f+'?width=1600'; THEME_PHOTO[th]=im; }
@@ -1283,7 +1293,7 @@ function drawSkyline(W,H,b){
   const dg=sx.createLinearGradient(0,horizonY,0,H);                  // realistic dark ground (lit a touch near the horizon)
   dg.addColorStop(0,rgb(mixC([11,10,12],[48,44,42],b))); dg.addColorStop(0.16,rgb(mixC([5,5,7],[24,22,24],b))); dg.addColorStop(1,rgb(mixC([1,1,3],[9,8,10],b)));
   sx.fillStyle=dg; sx.fillRect(0,horizonY-1,W,H-horizonY+1);
-  (LANDMARKS[(observer&&observer.theme)||'egypt']||lmEgypt)({W,H,b,u,hy:horizonY,CX:W*0.5,CY:H*0.4});  // city-specific landmarks
+  (LANDMARKS[(observer&&observer.theme)]||lmGeneric)({W,H,b,u,hy:horizonY,CX:W*0.5,CY:H*0.4});  // drawn fallback if a photo isn't available
 }
 
 // ---- LUNAR eclipse from the surface: full Moon + Earth's shadow → blood moon ----
@@ -1478,12 +1488,20 @@ const fmtLat=v=>Math.abs(v).toFixed(1)+'°'+(v>=0?'N':'S'), fmtLon=v=>Math.abs(v
 // lat/lon → point on the unit sphere, matching three.js SphereGeometry UVs of an equirectangular
 // earth map (Greenwich at texture centre) so a pin lands on the REAL country it names.
 const g3=(lat,lon)=>{ const la=lat*D2R,lo=lon*D2R,cl=Math.cos(la); return [cl*Math.cos(lo),Math.sin(la),-cl*Math.sin(lo)]; };
-const CITIES=[                                            // recommended observing sites (themed surface views)
-  {label:'🇪🇬 Cairo 開羅',     lat:30.0, lon:31.2,  theme:'egypt'},
-  {label:'🇫🇷 Paris 巴黎',     lat:48.86,lon:2.35,  theme:'paris'},
-  {label:'🇺🇸 New York 紐約',  lat:40.71,lon:-74.0, theme:'newyork'},
-  {label:'🇯🇵 Tokyo 東京',     lat:35.68,lon:139.7, theme:'tokyo'},
-  {label:'🇬🇧 London 倫敦',    lat:51.5, lon:-0.13, theme:'london'},
+const CITIES=[                                            // recommended observing sites (real-photo surface views)
+  {label:'🇪🇬 Cairo 開羅',         lat:30.0,  lon:31.2,   theme:'egypt'},
+  {label:'🇫🇷 Paris 巴黎',         lat:48.86, lon:2.35,   theme:'paris'},
+  {label:'🇺🇸 New York 紐約',      lat:40.71, lon:-74.0,  theme:'newyork'},
+  {label:'🇯🇵 Tokyo 東京',         lat:35.68, lon:139.7,  theme:'tokyo'},
+  {label:'🇬🇧 London 倫敦',        lat:51.5,  lon:-0.13,  theme:'london'},
+  {label:'🇦🇪 Dubai 杜拜',         lat:25.20, lon:55.27,  theme:'dubai'},
+  {label:'🇭🇰 Hong Kong 香港',     lat:22.30, lon:114.17, theme:'hongkong'},
+  {label:'🇸🇬 Singapore 新加坡',   lat:1.35,  lon:103.86, theme:'singapore'},
+  {label:'🇹🇷 Istanbul 伊斯坦堡',  lat:41.01, lon:28.98,  theme:'istanbul'},
+  {label:'🇷🇺 Moscow 莫斯科',      lat:55.75, lon:37.62,  theme:'moscow'},
+  {label:'🇦🇺 Sydney 雪梨',        lat:-33.87,lon:151.21, theme:'sydney'},
+  {label:'🇺🇸 San Francisco 舊金山',lat:37.80, lon:-122.47,theme:'sf'},
+  {label:'🇨🇦 Toronto 多倫多',     lat:43.64, lon:-79.38, theme:'toronto'},
 ];
 let gTween=null;                                         // target camera position while flying to a picked site
 function globeFace(lat,lon){ if(!gCam) return; const d=gCam.position.length()||4.4, v=g3(lat,lon);
