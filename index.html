@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Solar System · Eclipse Predictor</title>
 <style>
   :root{
@@ -1051,6 +1051,9 @@ canvas.addEventListener('touchmove', e=>{ if(e.touches.length>=2) controls.enabl
 const _reRotate=e=>{ if(e.touches.length===0) controls.enableRotate=true; };
 canvas.addEventListener('touchend', _reRotate,{passive:true});
 canvas.addEventListener('touchcancel', _reRotate,{passive:true});
+// iOS Safari: block the page's OWN pinch-zoom (its gesture* events) so two fingers zoom the
+// scene via OrbitControls, not the whole screen. Touch events still reach the controls.
+['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
 
 /* ---- textures (real planet maps via jsDelivr · CORS-safe) ---- */
 const BASE="https://cdn.jsdelivr.net/gh/jeromeetienne/threex.planets/images/";
