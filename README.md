@@ -41,9 +41,9 @@ Single self-contained `index.html` — no build step.
   a procedural granulating Sun, bloom, Saturn's ring, Earth's clouds + atmosphere, a Milky-Way
   backdrop and HUD labels that track each planet.
 - **🌍 Pick your observing site.** Click the Earth to open an interactive **globe** — drag to rotate and
-  tap to drop a pin anywhere, or pick one of **13 recommended world cities** (Cairo, Paris, New York,
-  Tokyo, London, Dubai, Hong Kong, Singapore, Istanbul, Moscow, Sydney, San Francisco, Toronto) with
-  one tap, which turns the globe to face that location. The pin lands on the **real
+  tap to drop a pin anywhere, or browse **17 recommended cities grouped by continent** — pick a region
+  (Asia · Europe · Africa · Americas · Oceania), then a city — which turns the globe to face that
+  location. The pin lands on the **real
   geographic position** on the Earth map (the lat/lon → sphere mapping matches the texture). Every
   eclipse calculation then runs **topocentrically from that point**: real lunar parallax (so the site
   sees its own total/partial/none), the **horizon** (the Sun may be below it — "not visible, it's
@@ -58,12 +58,13 @@ Single self-contained `index.html` — no build step.
   Moon bites into the Sun is the one you'd actually see standing there — a site near the central path
   sees a near-head-on cover, one far from it a slanted, shallow partial. Total vs. annular is decided
   by the Moon's real distance in the sim. (Any non-listed pin falls back to a drawn horizon.)
-- **🪐 Tap any planet for a fact sheet.** Click any of the 8 planets in the orbital view to open a
-  dedicated viewer: that planet rendered as a slowly-rotating, axially-tilted globe (real NASA texture,
-  Saturn's ring, Earth's clouds/atmosphere) beside a pop-sci panel — key stats (diameter, distance,
-  day/year length, moons, temperature), "did you know" facts, and a NASA exploration note (curated,
-  current to early 2026). Step through the planets with ‹ / › . (Earth's click still opens the
-  observing-site globe.)
+- **🪐 Tap any planet for an astronomer's fact sheet.** Click any of the 8 planets in the orbital view
+  to open a dedicated viewer: that planet rendered as a slowly-rotating, axially-tilted globe (real
+  NASA texture, Saturn's ring, Earth's clouds/atmosphere) beside a professional data panel — 10
+  physical & orbital parameters (mass, mean density, surface gravity, semi-major axis, orbital &
+  sidereal-rotation periods, obliquity, eccentricity, temperature), atmospheric composition, a set of
+  notable features, and a detailed exploration history/outlook (curated to early 2026). Step through
+  the planets with ‹ / › . (Earth's click still opens the observing-site globe.)
 - **Responsive.** Adapts framing and HUD for desktop and mobile.
 
 ## 🎮 Controls
