@@ -74,7 +74,10 @@ Single self-contained `index.html` — no build step.
   **profile dossier** for each major organisation — NASA, ESA, SpaceX, Roscosmos, CNSA, JAXA, ISRO,
   Blue Origin, Rocket Lab — with a glowing emblem, the **official logo**, founding/HQ/type, a milestones
   timeline, **a gallery of historical mission photos with captions** (Wikimedia Commons), and current
-  programs. (Live feeds fetched client-side and cached briefly; they degrade gracefully if unavailable.)
+  programs. A **Watch** tab embeds a curated set of **official @SpaceX clips, all under 10 minutes**
+  (mission cinematics, Starship flight-test recaps, the EVA suit, Polaris Dawn & Fram2), each playing
+  inline via the privacy-friendly youtube-nocookie player — a quick look at humanity's progress in space.
+  (Live feeds fetched client-side and cached briefly; they degrade gracefully if unavailable.)
 - **⏪ Reverse time.** Run the gravitational clock **backwards** as well as forwards — the symplectic
   integrator is time-reversible (energy holds to ~10⁻¹⁶ either way), so you can rewind orbits and the
   eclipse cycle. The ⏭ jump even finds the *previous* eclipse when time is reversed.

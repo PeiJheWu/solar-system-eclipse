@@ -244,6 +244,26 @@
   a.nart .nsrc{color:var(--amber)}
   .nstate{padding:26px 18px;text-align:center;color:var(--muted);font-size:12.5px}
   .nnote{padding:12px 16px 6px;font-size:9.5px;color:var(--muted);line-height:1.5;opacity:.8}
+  /* SpaceX watch grid + video lightbox */
+  .watchGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 14px 4px}
+  .vcard{cursor:pointer;border:1px solid var(--panel-bd);border-radius:10px;overflow:hidden;background:rgba(255,255,255,.03);transition:.15s}
+  .vcard:hover{border-color:var(--cyan);box-shadow:0 0 16px rgba(95,227,255,.18);transform:translateY(-2px)}
+  .vthumb{position:relative;aspect-ratio:16/9;background:#06080f}
+  .vthumb img{width:100%;height:100%;object-fit:cover;display:block}
+  .vthumb .vplay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;text-shadow:0 0 12px rgba(0,0,0,.85);opacity:.9;transition:.15s}
+  .vcard:hover .vplay{opacity:1;transform:scale(1.12);color:var(--cyan)}
+  .vthumb .vdur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.82);color:#fff;font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:4px}
+  .vcard .vt{font-size:11.5px;color:var(--text);line-height:1.35;padding:8px 10px}
+  #vidbox{position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;
+    background:rgba(2,4,10,.93);opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(6px)}
+  #vidbox.show{opacity:1;pointer-events:auto}
+  #vidbox .vidFrame{width:min(94vw,960px);aspect-ratio:16/9;border:1px solid var(--panel-bd);border-radius:14px;overflow:hidden;background:#000;
+    box-shadow:0 0 60px rgba(0,0,0,.7), 0 0 34px rgba(95,227,255,.16)}
+  #vidbox iframe{width:100%;height:100%;border:0;display:block}
+  #vidClose{position:absolute;top:18px;right:22px;background:none;border:none;color:var(--muted);font-size:26px;cursor:pointer;z-index:26}
+  #vidClose:hover{color:var(--text)}
+  #vidYT{font-family:var(--mono);font-size:12px;color:var(--cyan);text-decoration:none;border:1px solid var(--panel-bd);border-radius:8px;padding:8px 14px}
+  #vidYT:hover{border-color:var(--cyan);background:rgba(95,227,255,.12)}
   #newsTabs{display:flex;gap:6px;padding:10px 14px 0}
   #newsTabs button{flex:1;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);
     padding:7px 4px 9px;cursor:pointer;font-size:12px;font-family:var(--mono);letter-spacing:.5px;transition:.15s}
@@ -614,9 +634,15 @@
 
 <div id="news">
   <div class="vhead">📡 Mission Feed<button id="exitNews">✕</button></div>
-  <div id="newsTabs"><button data-tab="feed" class="on">📡 Live feed</button><button data-tab="agencies">🏛 Agencies</button></div>
+  <div id="newsTabs"><button data-tab="feed" class="on">📡 Live feed</button><button data-tab="watch">▶ Watch</button><button data-tab="agencies">🏛 Agencies</button></div>
   <div id="newsFilters"></div>
   <div id="newsList"></div>
+</div>
+
+<div id="vidbox">
+  <button id="vidClose" title="Close">✕</button>
+  <div class="vidFrame"><iframe id="vidIframe" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+  <a id="vidYT" target="_blank" rel="noopener noreferrer">Watch on YouTube ↗</a>
 </div>
 
 <div id="agency">
@@ -2025,9 +2051,39 @@ document.getElementById('agClose').onclick=closeAgency;
 document.getElementById('agPrev').onclick=()=>openAgency(agIdx-1);
 document.getElementById('agNext').onclick=()=>openAgency(agIdx+1);
 renderAgencyDock();
+/* ---- SpaceX short clips (≤10 min) — durations verified via the YouTube player ---- */
+const SPACEX_VIDS=[
+  {id:"v9lAGmWhcZM",t:"To Make Life Multiplanetary",d:"1:49"},
+  {id:"T43sbhCKvBY",t:"Making Life Multi-Planetary",d:"1:25"},
+  {id:"ApMrILhTulI",t:"Starship · Third Flight Test",d:"2:23"},
+  {id:"j2BdNDTlWbo",t:"Starship · Fourth Flight Test",d:"2:41"},
+  {id:"hI9HQfCAw64",t:"Starship · Fifth Flight Test",d:"3:29"},
+  {id:"CMGiNKcVSek",t:"Starship · Sixth Flight Test",d:"2:03"},
+  {id:"Pn6e1O5bEyA",t:"Starship · Seventh Flight Test",d:"2:55"},
+  {id:"rcd_SQZDlnk",t:"Starship · Tenth Flight Test",d:"2:15"},
+  {id:"fdELVCg2Ank",t:"The EVA Spacesuit",d:"0:49"},
+  {id:"zgN373ZDtJg",t:"Polaris Dawn · EVA Animation",d:"0:51"},
+  {id:"HIam99L4vf4",t:"Polaris Dawn · Mission",d:"1:09"},
+  {id:"MaJmUUtr2SI",t:"Polaris Dawn",d:"3:01"},
+  {id:"5_DZtCYhdXc",t:"Polaris Dawn · Views from Dragon",d:"4:57"},
+  {id:"BYTE4MtR0do",t:"Fram2 · Polar Orbit Views",d:"2:42"},
+];
+function renderWatchGrid(){ const list=document.getElementById('newsList');
+  list.innerHTML='<div class="nsub">🚀 SpaceX · short clips · humanity\'s progress in space</div><div class="watchGrid">'+
+    SPACEX_VIDS.map((v,i)=>`<div class="vcard" data-i="${i}"><div class="vthumb"><img loading="lazy" src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" alt=""><div class="vplay">▶</div><div class="vdur">${escH(v.d)}</div></div><div class="vt">${escH(v.t)}</div></div>`).join('')+
+    '</div><div class="nnote">Official @SpaceX videos, played here via YouTube · every clip is under 10 minutes.</div>';
+  list.querySelectorAll('.vcard').forEach(c=>c.onclick=()=>openVid(SPACEX_VIDS[+c.dataset.i].id));
+}
+function openVid(id){ document.getElementById('vidIframe').src='https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0';
+  document.getElementById('vidYT').href='https://www.youtube.com/watch?v='+id; document.getElementById('vidbox').classList.add('show'); }
+function closeVid(){ document.getElementById('vidIframe').src=''; document.getElementById('vidbox').classList.remove('show'); }
+document.getElementById('vidClose').onclick=closeVid;
+document.getElementById('vidbox').addEventListener('click',e=>{ if(e.target.id==='vidbox') closeVid(); });
+
 document.querySelectorAll('#newsTabs button').forEach(b=>b.onclick=()=>{
   const tab=b.dataset.tab; document.querySelectorAll('#newsTabs button').forEach(x=>x.classList.toggle('on',x===b));
   if(tab==='agencies'){ document.getElementById('newsFilters').style.display='none'; renderAgencyGrid(); }
+  else if(tab==='watch'){ document.getElementById('newsFilters').style.display='none'; renderWatchGrid(); }
   else { document.getElementById('newsFilters').style.display=''; renderNewsFilters(); loadNews(); }
 });
 
