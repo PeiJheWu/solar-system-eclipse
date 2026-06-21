@@ -202,6 +202,16 @@
   #globeCities button.regionChip{font-size:12.5px;padding:7px 14px;background:rgba(95,227,255,.13);font-weight:600}
   #globeCities button.backChip{color:var(--muted);background:transparent;border-color:transparent}
   #globeCities button.backChip:hover{color:var(--cyan)}
+  /* continent / city markers projected onto the 3D globe */
+  #globeLabels{position:fixed;inset:0;z-index:12;pointer-events:none}
+  #globeLabels .globeLabel{position:fixed;transform:translate(-50%,-50%);pointer-events:auto;cursor:pointer;white-space:nowrap;
+    font-family:var(--mono);color:var(--text);background:rgba(8,14,26,.55);border:1px solid var(--panel-bd);border-radius:999px;
+    backdrop-filter:blur(4px);transition:background .15s,border-color .15s}
+  #globeLabels .globeLabel:hover{background:rgba(95,227,255,.25);border-color:var(--cyan)}
+  #globeLabels .globeLabel.continent{font-size:13px;letter-spacing:1px;font-weight:600;padding:6px 13px;color:#eaf3ff;
+    text-shadow:0 1px 6px rgba(0,0,0,.8);box-shadow:0 2px 14px rgba(0,0,0,.45)}
+  #globeLabels .globeLabel.city{font-size:11px;padding:4px 10px;color:var(--cyan)}
+  #globeLabels .globeLabel.city::before{content:"◉ ";opacity:.7}
   #globeBar{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;
     background:var(--panel);border:1px solid var(--panel-bd);border-radius:14px;padding:10px 14px;backdrop-filter:blur(14px);
     box-shadow:0 8px 40px rgba(0,0,0,.5);flex-wrap:wrap;justify-content:center;max-width:94vw}
@@ -269,6 +279,16 @@
     #planetFacts{flex:1 1 auto;max-width:none;width:100%;height:auto;border-left:none;border-top:1px solid rgba(255,255,255,.08);padding:20px 18px 88px}
     #planetFacts h2{font-size:31px}
     #planetNav{left:50%;bottom:14px}
+    #globe{padding:46px 10px 96px}
+    .ghead{font-size:13px;padding:0 40px;line-height:1.3}
+    #globeHint{font-size:9.5px;top:42px;padding:0 12px}
+    #globeCities{top:58px;flex-wrap:wrap;overflow:visible;justify-content:center;padding:4px 10px;
+      -webkit-mask-image:none;mask-image:none}
+    #globeCanvas{width:min(82vw,46vh);height:min(82vw,46vh)}
+    #globeLabels .globeLabel.continent{font-size:11px;padding:5px 10px;letter-spacing:.4px}
+    #globeLabels .globeLabel.city{font-size:9.5px;padding:3px 8px}
+    #globeBar{bottom:14px;gap:8px;padding:9px 12px}
+    #obsReadout{min-width:0;width:100%;font-size:11px}
     #title,#forecast,#diagwrap{display:none}
     .hint{display:none}
     #clock{top:10px;left:10px;right:10px;min-width:0;padding:10px 14px}
@@ -355,10 +375,11 @@
 </div>
 
 <div id="globe">
-  <div class="ghead">🌍 選擇觀測地點 · Pick your site<button id="exitGlobe">✕</button></div>
+  <div class="ghead">🌍 Pick your observing site<button id="exitGlobe">✕</button></div>
   <canvas id="globeCanvas"></canvas>
   <div id="globeHint">drag to rotate · tap the globe to drop a pin · or pick a continent, then a city</div>
   <div id="globeCities"></div>
+  <div id="globeLabels"></div>
   <div id="globeBar">
     <div id="obsReadout">No site selected</div>
     <button id="useObs">Observe from here →</button>
@@ -1556,29 +1577,29 @@ const fmtLat=v=>Math.abs(v).toFixed(1)+'°'+(v>=0?'N':'S'), fmtLon=v=>Math.abs(v
 // earth map (Greenwich at texture centre) so a pin lands on the REAL country it names.
 const g3=(lat,lon)=>{ const la=lat*D2R,lo=lon*D2R,cl=Math.cos(la); return [cl*Math.cos(lo),Math.sin(la),-cl*Math.sin(lo)]; };
 const REGIONS=[   // observing sites grouped by continent → pick a region, then a city (real-photo surface views)
-  {label:'🌏 Asia', cities:[
+  {label:'🌏 Asia', clat:43, clon:87, cities:[
     {label:'🇯🇵 Tokyo',     lat:35.68, lon:139.7,  theme:'tokyo'},
     {label:'🇭🇰 Hong Kong', lat:22.30, lon:114.17, theme:'hongkong'},
     {label:'🇸🇬 Singapore', lat:1.35,  lon:103.86, theme:'singapore'},
     {label:'🇦🇪 Dubai',     lat:25.20, lon:55.27,  theme:'dubai'},
   ]},
-  {label:'🌍 Europe', cities:[
+  {label:'🌍 Europe', clat:52, clon:15, cities:[
     {label:'🇫🇷 Paris',     lat:48.86, lon:2.35,   theme:'paris'},
     {label:'🇬🇧 London',    lat:51.5,  lon:-0.13,  theme:'london'},
     {label:'🇹🇷 Istanbul',  lat:41.01, lon:28.98,  theme:'istanbul'},
     {label:'🇷🇺 Moscow',    lat:55.75, lon:37.62,  theme:'moscow'},
   ]},
-  {label:'🌍 Africa', cities:[
+  {label:'🌍 Africa', clat:3, clon:22, cities:[
     {label:'🇪🇬 Cairo',     lat:30.0,  lon:31.2,   theme:'egypt'},
     {label:'🇿🇦 Cape Town', lat:-33.92,lon:18.42,  theme:'capetown'},
   ]},
-  {label:'🌎 Americas', cities:[
+  {label:'🌎 Americas', clat:14, clon:-85, cities:[
     {label:'🇺🇸 New York',     lat:40.71, lon:-74.0,  theme:'newyork'},
     {label:'🇺🇸 San Francisco',lat:37.80, lon:-122.47,theme:'sf'},
     {label:'🇨🇦 Toronto',      lat:43.64, lon:-79.38, theme:'toronto'},
     {label:'🇧🇷 Rio de Janeiro',lat:-22.91,lon:-43.18, theme:'rio'},
   ]},
-  {label:'🌏 Oceania', cities:[
+  {label:'🌏 Oceania', clat:-27, clon:140, cities:[
     {label:'🇦🇺 Sydney',    lat:-33.87,lon:151.21, theme:'sydney'},
     {label:'🇦🇺 Melbourne', lat:-37.81,lon:144.96, theme:'melbourne'},
     {label:'🇳🇿 Auckland',  lat:-36.85,lon:174.76, theme:'auckland'},
@@ -1588,11 +1609,25 @@ let gTween=null;                                         // target camera positi
 function globeFace(lat,lon){ if(!gCam) return; const d=gCam.position.length()||4.4, v=g3(lat,lon);
   if(gControls) gControls.autoRotate=false; gTween=new THREE.Vector3(v[0]*d,v[1]*d,v[2]*d); }
 function pickCity(c){ gpin={lat:c.lat,lon:c.lon,theme:c.theme}; globeFace(c.lat,c.lon); obsReadout(); }
-function gRenderRegions(){ const cd=document.getElementById('globeCities'); cd.innerHTML='';   // level 1: continents
-  REGIONS.forEach(rg=>{ const b=document.createElement('button'); b.className='regionChip'; b.textContent=rg.label; b.onclick=()=>gRenderCities(rg); cd.appendChild(b); }); }
+let gLabels=[];                                                     // {el,lat,lon} markers projected onto the 3D globe
+function gSetLabels(items){ const box=document.getElementById('globeLabels'); box.innerHTML=''; gLabels=[];
+  items.forEach(it=>{ const b=document.createElement('button'); b.className='globeLabel '+(it.cls||''); b.textContent=it.text; b.onclick=it.onclick;
+    box.appendChild(b); gLabels.push({el:b,lat:it.lat,lon:it.lon}); }); }
+function gUpdateLabels(){ if(!gLabels.length||!gCam) return;        // project each marker to screen each frame
+  const r=gCv.getBoundingClientRect(), camN=gCam.position.clone().normalize(), v=new THREE.Vector3();
+  for(const L of gLabels){ const P=g3(L.lat,L.lon); v.set(P[0],P[1],P[2]); const facing=v.dot(camN);
+    v.multiplyScalar(1.02).project(gCam);
+    if(facing<0.1 || v.z>1){ L.el.style.display='none'; continue; }
+    L.el.style.display=''; L.el.style.opacity=Math.min(1,(facing-0.1)/0.28);
+    L.el.style.left=(r.left+(v.x*0.5+0.5)*r.width)+'px'; L.el.style.top=(r.top+(-v.y*0.5+0.5)*r.height)+'px'; } }
+function gRenderRegions(){ const cd=document.getElementById('globeCities'); cd.innerHTML='';   // level 1: continents (chips + globe labels)
+  REGIONS.forEach(rg=>{ const b=document.createElement('button'); b.className='regionChip'; b.textContent=rg.label; b.onclick=()=>gRenderCities(rg); cd.appendChild(b); });
+  gSetLabels(REGIONS.map(rg=>({text:rg.label.replace(/^\S+\s/,''), lat:rg.clat, lon:rg.clon, cls:'continent', onclick:()=>gRenderCities(rg)}))); }
 function gRenderCities(rg){ const cd=document.getElementById('globeCities'); cd.innerHTML='';   // level 2: cities in a continent
   const back=document.createElement('button'); back.className='backChip'; back.textContent='‹ '+rg.label.replace(/^\S+\s/,''); back.onclick=gRenderRegions; cd.appendChild(back);
-  rg.cities.forEach(c=>{ const b=document.createElement('button'); b.textContent=c.label; b.onclick=()=>pickCity(c); cd.appendChild(b); }); }
+  rg.cities.forEach(c=>{ const b=document.createElement('button'); b.textContent=c.label; b.onclick=()=>pickCity(c); cd.appendChild(b); });
+  globeFace(rg.clat,rg.clon);                                       // turn the globe to face the chosen continent
+  gSetLabels(rg.cities.map(c=>({text:c.label.replace(/^\S+\s/,''), lat:c.lat, lon:c.lon, cls:'city', onclick:()=>pickCity(c)}))); }
 function glowMarker(color,scale){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color,
   transparent:true,blending:THREE.AdditiveBlending,depthWrite:false})); s.scale.set(scale,scale,1); return s; }
 function initGlobe(){
@@ -1637,7 +1672,7 @@ function renderGlobe(){
   gLight.position.set(L[0]*10,L[1]*10,L[2]*10); gLight.target.position.set(0,0,0);
   if(gpin){ const P=g3(gpin.lat,gpin.lon); gPin.visible=true; gPin.position.set(P[0]*1.05,P[1]*1.05,P[2]*1.05); } else gPin.visible=false;
   if(gTween){ gCam.position.lerp(gTween,0.16); if(gCam.position.distanceTo(gTween)<0.02){ gCam.position.copy(gTween); gTween=null; } }  // smooth fly-to picked city
-  gClouds.rotation.y+=0.0004; gControls.update(); gRenderer.render(gScene,gCam);
+  gClouds.rotation.y+=0.0004; gControls.update(); gRenderer.render(gScene,gCam); gUpdateLabels();
 }
 function obsReadout(){ document.getElementById('obsReadout').textContent = gpin?`Site ${fmtLat(gpin.lat)} ${fmtLon(gpin.lon)}`:'Tap the globe to choose'; }
 function updateBadge(){ const el=document.getElementById('obsBadge');

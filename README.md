@@ -43,7 +43,8 @@ Single self-contained `index.html` — no build step.
 - **🌍 Pick your observing site.** Click the Earth to open an interactive **globe** — drag to rotate and
   tap to drop a pin anywhere, or browse **17 recommended cities grouped by continent** — pick a region
   (Asia · Europe · Africa · Americas · Oceania), then a city — which turns the globe to face that
-  location. The pin lands on the **real
+  location. The continents (and a region's cities) are also **labelled directly on the 3D globe**, with
+  labels that track the surface and hide round the far side as you rotate. The pin lands on the **real
   geographic position** on the Earth map (the lat/lon → sphere mapping matches the texture). Every
   eclipse calculation then runs **topocentrically from that point**: real lunar parallax (so the site
   sees its own total/partial/none), the **horizon** (the Sun may be below it — "not visible, it's
