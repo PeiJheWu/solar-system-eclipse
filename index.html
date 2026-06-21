@@ -1429,7 +1429,6 @@ function initGlobe(){
   gControls=new OrbitControls(gCam,gCv); gControls.enableDamping=true; gControls.dampingFactor=0.08;
   gControls.enablePan=false; gControls.minDistance=2.5; gControls.maxDistance=9; gControls.rotateSpeed=0.5;
   gControls.autoRotate=true; gControls.autoRotateSpeed=0.45;
-  gScene.add(makeStars(260,9,24,1.5,0.75));                                       // visible space backdrop (corners read as stars)
   gScene.add(new THREE.AmbientLight(0x556686,1.6));                              // bright + mostly even so the whole globe is clear
   gLight=new THREE.DirectionalLight(0xfff2e0,0.95); gScene.add(gLight); gScene.add(gLight.target);  // gentle shading for 3D form
   gEarth=new THREE.Mesh(new THREE.SphereGeometry(1,96,96), new THREE.MeshStandardMaterial({
@@ -1438,11 +1437,6 @@ function initGlobe(){
   gClouds=new THREE.Mesh(new THREE.SphereGeometry(1.012,96,96), new THREE.MeshStandardMaterial({
     map:gCloudTex, alphaMap:gCloudTex, transparent:true, opacity:0.85, depthWrite:false, roughness:1 }));
   gScene.add(gClouds);
-  const atmoMat=new THREE.ShaderMaterial({ transparent:true, blending:THREE.AdditiveBlending, side:THREE.BackSide, depthWrite:false,
-    uniforms:{uColor:{value:new THREE.Color(0x3f78c0)}},
-    vertexShader:`varying vec3 vN;varying vec3 vV;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);vN=normalize(normalMatrix*normal);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}`,
-    fragmentShader:`uniform vec3 uColor;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.-clamp(dot(vN,vV),0.,1.),4.0);gl_FragColor=vec4(uColor,f*0.45);}`});
-  gScene.add(new THREE.Mesh(new THREE.SphereGeometry(1.13,64,64), atmoMat));      // subtle, tight rim glow
   // holographic graticule
   const pts=[];
   for(let lo=-180;lo<180;lo+=30) for(let la=-90;la<90;la+=3){ pts.push(g3(la,lo),g3(la+3,lo)); }
