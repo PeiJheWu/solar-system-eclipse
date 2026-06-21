@@ -192,6 +192,10 @@
   .ghead button{position:absolute;right:16px;top:-2px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer}
   #globeCanvas{width:min(86vw,70vh);height:min(86vw,70vh);touch-action:none;cursor:crosshair}
   #globeHint{position:absolute;top:46px;left:0;right:0;text-align:center;font-size:11px;color:var(--muted)}
+  #globeCities{position:absolute;top:70px;left:0;right:0;display:flex;flex-wrap:wrap;gap:7px;justify-content:center;padding:0 12px;z-index:11}
+  #globeCities button{background:rgba(95,227,255,.08);border:1px solid var(--panel-bd);color:var(--text);
+    padding:6px 11px;border-radius:999px;cursor:pointer;font-size:11.5px;font-family:var(--mono);transition:.15s}
+  #globeCities button:hover{background:rgba(95,227,255,.2);border-color:var(--cyan)}
   #globeBar{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;
     background:var(--panel);border:1px solid var(--panel-bd);border-radius:14px;padding:10px 14px;backdrop-filter:blur(14px);
     box-shadow:0 8px 40px rgba(0,0,0,.5);flex-wrap:wrap;justify-content:center;max-width:94vw}
@@ -293,7 +297,8 @@
 <div id="globe">
   <div class="ghead">🌍 選擇觀測地點 · Pick your site<button id="exitGlobe">✕</button></div>
   <canvas id="globeCanvas"></canvas>
-  <div id="globeHint">drag to rotate · tap the globe to drop a pin</div>
+  <div id="globeHint">drag to rotate · tap the globe to drop a pin · or pick a city below</div>
+  <div id="globeCities"></div>
   <div id="globeBar">
     <div id="obsReadout">No site selected</div>
     <button id="useObs">Observe from here →</button>
@@ -1117,7 +1122,7 @@ function drawSolarSurface(W,H){
     const grd=sx.createLinearGradient(0,0,0,H); grd.addColorStop(0,rgb([4,6,16])); grd.addColorStop(1,rgb([14,16,34]));
     sx.fillStyle=grd; sx.fillRect(0,0,W,H);
     sx.fillStyle="#dfe6f5"; for(const s of sStars){ sx.globalAlpha=0.5+0.4*s.t; sx.beginPath(); sx.arc(s.x*W,s.y*H,s.r,0,TAU); sx.fill(); } sx.globalAlpha=1;
-    drawEgypt(W,H,0.06);
+    drawSkyline(W,H,0.06);
     document.getElementById('sKind').textContent="Sun below horizon · not visible here";
     document.getElementById('sCov').textContent=`Sun altitude ${ev.sunAlt.toFixed(0)}° (night) · ${fmtDate(dayToDate(simDay))}`;
     return;
@@ -1160,75 +1165,113 @@ function drawSolarSurface(W,H){
     sx.fillStyle=dr; sx.beginPath(); sx.arc(bx,by,moonPx,0,TAU); sx.fill();
   }
 
-  drawEgypt(W,H,b);
+  drawSkyline(W,H,b);
   document.getElementById('sKind').textContent = ev.kind==="—"?"No eclipse":ev.kind+" solar eclipse";
   document.getElementById('sCov').textContent  = (ev.cover*100|0)+"% of Sun covered · "+fmtDate(dayToDate(simDay));
 }
 
 // ---- sci-fi Egypt foreground (shared by both views; b = sky brightness 0..1) ----
-function drawEgypt(W,H,b){
-  const u=Math.min(W,H), horizonY=H*0.82, CX=W*0.5, CY=H*0.4, SR=u*0.12;
-  // sand — dark gradient (warm by day, near-black at totality)
-  const dg=sx.createLinearGradient(0,horizonY,0,H);
-  dg.addColorStop(0,rgb(mixC([10,9,15],[54,42,38],b))); dg.addColorStop(1,rgb(mixC([2,2,5],[14,11,13],b)));
-  sx.fillStyle=dg; sx.fillRect(0,horizonY-1,W,H-horizonY+1);
+/* ---- per-city skyline silhouettes (sci-fi: dark body + glowing cyan edge + warm lights) ---- */
+const silFill=b=>rgb(mixC([9,9,14],[30,28,34],b));
+const EDGE="rgba(130,225,255,0.5)", WARM="rgba(255,210,130,0.95)";
+function edgeGlow(col,blur,w){ sx.save(); sx.shadowColor=col; sx.shadowBlur=blur; sx.strokeStyle=col; sx.lineWidth=w; sx.stroke(); sx.restore(); }
+function cityLight(x,y,r,col){ sx.save(); sx.shadowColor=col||WARM; sx.shadowBlur=7; sx.fillStyle=col||WARM; sx.beginPath(); sx.arc(x,y,r,0,TAU); sx.fill(); sx.restore(); }
+function box(x,y,w,h){ sx.fillStyle=silFill(_B); sx.beginPath(); sx.rect(x,y,w,h); sx.fill(); edgeGlow(EDGE,4,0.9); }
+let _B=1;   // current sky brightness, set by drawSkyline for the helpers
 
-  // holographic perspective grid (glows brighter in the dark)
-  const gridA=0.05+0.13*(1-b);
+function lmEgypt(C){ const {W,b,u,hy,CX,CY}=C, sky=mixC([26,34,60],[150,158,180],b);
+  function pyr(px,w,h,depth){ const ay=hy-h,lx=px-w/2,rx=px+w/2;
+    const baseC=mixC(mixC([7,7,12],[34,27,24],b),sky,depth*0.55),litC=mixC(baseC,[235,228,205],0.16-depth*0.1),shC=mixC(baseC,[0,0,0],0.4);
+    let g=sx.createLinearGradient(0,ay,0,hy); g.addColorStop(0,rgb(litC)); g.addColorStop(1,rgb(baseC));
+    sx.fillStyle=g; sx.beginPath(); sx.moveTo(px,ay); sx.lineTo(lx,hy); sx.lineTo(px,hy); sx.closePath(); sx.fill();
+    g=sx.createLinearGradient(0,ay,0,hy); g.addColorStop(0,rgb(mixC(shC,[0,0,0],0.15))); g.addColorStop(1,rgb(shC));
+    sx.fillStyle=g; sx.beginPath(); sx.moveTo(px,ay); sx.lineTo(px,hy); sx.lineTo(rx,hy); sx.closePath(); sx.fill();
+    const k=1-depth;
+    sx.save(); sx.shadowColor="rgba(225,238,255,0.85)"; sx.shadowBlur=11*k; sx.strokeStyle=`rgba(238,244,255,${0.55*k})`; sx.lineWidth=1.4; sx.beginPath(); sx.moveTo(lx,hy); sx.lineTo(px,ay); sx.lineTo(rx,hy); sx.stroke(); sx.restore();
+    sx.save(); sx.shadowColor="rgba(95,227,255,0.9)"; sx.shadowBlur=9*k; sx.strokeStyle=`rgba(120,225,255,${0.5*k})`; sx.lineWidth=1.1; sx.beginPath(); sx.moveTo(px,ay); sx.lineTo(px,hy); sx.stroke(); sx.restore(); }
+  pyr(W*0.74,u*0.055,u*0.045,0.7); pyr(W*0.775,u*0.05,u*0.04,0.72); pyr(W*0.81,u*0.045,u*0.035,0.74);
+  pyr(W*0.655,u*0.19,u*0.14,0.4); pyr(W*0.55,u*0.30,u*0.22,0.2); pyr(W*0.40,u*0.36,u*0.27,0.0);
+  const apx=W*0.40, apy=hy-u*0.27, bw=u*0.02;                       // apex beam toward the eclipse
+  sx.save(); sx.globalCompositeOperation="lighter"; const bg=sx.createLinearGradient(0,apy,0,CY);
+  bg.addColorStop(0,`rgba(150,225,255,${0.26+0.2*(1-b)})`); bg.addColorStop(1,"rgba(150,225,255,0)");
+  sx.fillStyle=bg; sx.beginPath(); sx.moveTo(apx-bw*0.35,CY); sx.lineTo(apx+bw*0.35,CY); sx.lineTo(apx+bw,apy); sx.lineTo(apx-bw,apy); sx.closePath(); sx.fill(); sx.restore();
+  const obel=(x,h)=>{ const w=u*0.02; sx.fillStyle=silFill(b); sx.beginPath(); sx.moveTo(x-w/2,hy); sx.lineTo(x-w*0.34,hy-h*0.85); sx.lineTo(x,hy-h); sx.lineTo(x+w*0.34,hy-h*0.85); sx.lineTo(x+w/2,hy); sx.closePath(); sx.fill(); cityLight(x,hy-h*0.9,w*0.3,WARM); };
+  obel(W*0.075,u*0.28); obel(W*0.13,u*0.22);
+}
+function lmParis(C){ const {W,b,u,hy}=C;
+  for(const [x,w,h] of [[0.13,0.12,0.09],[0.27,0.09,0.07],[0.72,0.10,0.08],[0.85,0.12,0.10]]){
+    box(W*x,hy-u*h,W*w,u*h); cityLight(W*x+W*w*0.35,hy-u*h*0.6,1,WARM); cityLight(W*x+W*w*0.7,hy-u*h*0.35,1,WARM); }
+  const cx=W*0.5, by=hy, h=u*0.55, w0=u*0.2, w1=w0*0.5, w2=w0*0.2, ap=u*0.006;   // Eiffel Tower
+  sx.fillStyle=silFill(b); sx.beginPath();
+  sx.moveTo(cx-w0/2,by); sx.quadraticCurveTo(cx-w1*0.8,by-h*0.28,cx-w1/2,by-h*0.32);
+  sx.lineTo(cx-w2/2,by-h*0.6); sx.lineTo(cx-ap,by-h); sx.lineTo(cx+ap,by-h);
+  sx.lineTo(cx+w2/2,by-h*0.6); sx.lineTo(cx+w1/2,by-h*0.32); sx.quadraticCurveTo(cx+w1*0.8,by-h*0.28,cx+w0/2,by); sx.closePath(); sx.fill(); edgeGlow(EDGE,9,1.3);
+  sx.fillStyle=silFill(b); sx.fillRect(cx-w1*0.62,by-h*0.31,w1*1.24,u*0.013); sx.fillRect(cx-w2*0.7,by-h*0.59,w2*1.4,u*0.011);
+  cityLight(cx,by-h,u*0.011,WARM);
+}
+function lmNY(C){ const {W,b,u,hy}=C;
+  const blocks=[[0.08,0.07,0.13],[0.16,0.06,0.21],[0.22,0.05,0.11],[0.32,0.06,0.17],[0.39,0.05,0.30],[0.45,0.05,0.15],
+    [0.57,0.06,0.23],[0.63,0.05,0.13],[0.69,0.07,0.31],[0.785,0.05,0.18],[0.85,0.06,0.12],[0.91,0.05,0.17]];
+  blocks.forEach(([x,w,h],bi)=>{ box(W*x,hy-u*h,W*w,u*h);
+    for(let r=0;r<6;r++)for(let c=0;c<2;c++) if(((bi*5+r*3+c)%4)!==0) cityLight(W*x+W*w*(0.3+c*0.4),hy-u*h*(0.14+r*0.14),1,WARM); });
+  sx.strokeStyle=silFill(b); sx.lineWidth=2; sx.beginPath(); sx.moveTo(W*0.72,hy-u*0.31); sx.lineTo(W*0.72,hy-u*0.37); sx.stroke();   // One WTC antenna
+  cityLight(W*0.72,hy-u*0.37,1.5,"rgba(255,90,90,0.95)");
+  const lx=W*0.05, ly=hy, sh=u*0.18;                                 // Statue of Liberty
+  box(lx-sh*0.12,ly-sh*0.38,sh*0.24,sh*0.38);
+  sx.fillStyle=silFill(b); sx.beginPath(); sx.moveTo(lx-sh*0.07,ly-sh*0.38); sx.lineTo(lx+sh*0.07,ly-sh*0.38); sx.lineTo(lx+sh*0.05,ly-sh*0.84); sx.lineTo(lx-sh*0.05,ly-sh*0.84); sx.closePath(); sx.fill();
+  sx.beginPath(); sx.arc(lx,ly-sh*0.9,sh*0.05,0,TAU); sx.fill();
+  sx.strokeStyle=silFill(b); sx.lineWidth=sh*0.04; sx.beginPath(); sx.moveTo(lx+sh*0.03,ly-sh*0.82); sx.lineTo(lx+sh*0.12,ly-sh*1.02); sx.stroke();
+  cityLight(lx+sh*0.13,ly-sh*1.04,sh*0.05,WARM);
+}
+function lmTokyo(C){ const {W,b,u,hy}=C;
+  const fx=W*0.62, fh=u*0.34, fw=u*0.62;                             // Mt Fuji
+  sx.fillStyle=rgb(mixC([14,16,26],[44,48,64],b)); sx.beginPath();
+  sx.moveTo(fx-fw/2,hy); sx.lineTo(fx-fw*0.09,hy-fh*0.92); sx.lineTo(fx+fw*0.09,hy-fh*0.92); sx.lineTo(fx+fw/2,hy); sx.closePath(); sx.fill(); edgeGlow(EDGE,6,1);
+  sx.fillStyle=rgb(mixC([120,130,150],[232,236,246],b)); sx.beginPath();
+  sx.moveTo(fx-fw*0.12,hy-fh*0.78); sx.lineTo(fx-fw*0.09,hy-fh*0.92); sx.lineTo(fx+fw*0.09,hy-fh*0.92); sx.lineTo(fx+fw*0.12,hy-fh*0.78);
+  sx.lineTo(fx+fw*0.05,hy-fh*0.7); sx.lineTo(fx,hy-fh*0.77); sx.lineTo(fx-fw*0.05,hy-fh*0.7); sx.closePath(); sx.fill();
+  const tx=W*0.22, th=u*0.42, tw=u*0.13;                             // Tokyo Tower (red)
+  sx.fillStyle=rgb(mixC([60,24,20],[160,55,42],b)); sx.beginPath();
+  sx.moveTo(tx-tw/2,hy); sx.lineTo(tx-tw*0.16,hy-th*0.55); sx.lineTo(tx-u*0.004,hy-th); sx.lineTo(tx+u*0.004,hy-th); sx.lineTo(tx+tw*0.16,hy-th*0.55); sx.lineTo(tx+tw/2,hy); sx.closePath(); sx.fill();
+  sx.save(); sx.shadowColor="rgba(255,90,70,0.8)"; sx.shadowBlur=8; sx.strokeStyle="rgba(255,120,90,0.6)"; sx.lineWidth=1.2; sx.stroke(); sx.restore();
+  sx.fillStyle=rgb(mixC([60,24,20],[160,55,42],b)); sx.fillRect(tx-tw*0.3,hy-th*0.5,tw*0.6,u*0.02);
+  cityLight(tx,hy-th,u*0.01,"rgba(255,120,90,0.95)");
+  for(const [x,w,h] of [[0.40,0.07,0.14],[0.48,0.06,0.10]]) box(W*x,hy-u*h,W*w,u*h);
+}
+function lmLondon(C){ const {W,b,u,hy}=C;
+  box(W*0.30,hy-u*0.12,W*0.34,u*0.12);                               // Houses of Parliament
+  for(let i=0;i<5;i++){ const x=W*(0.33+i*0.07); sx.fillStyle=silFill(b); sx.beginPath(); sx.moveTo(x-u*0.012,hy-u*0.12); sx.lineTo(x,hy-u*0.17); sx.lineTo(x+u*0.012,hy-u*0.12); sx.closePath(); sx.fill(); }
+  const bx=W*0.25, bh=u*0.34, bw=u*0.05;                             // Big Ben
+  box(bx-bw/2,hy-bh,bw,bh); cityLight(bx,hy-bh*0.82,bw*0.32,WARM);
+  sx.fillStyle=silFill(b); sx.beginPath(); sx.moveTo(bx-bw/2,hy-bh); sx.lineTo(bx,hy-bh-u*0.05); sx.lineTo(bx+bw/2,hy-bh); sx.closePath(); sx.fill();
+  const ex=W*0.8, ey=hy-u*0.15, er=u*0.14;                            // London Eye
+  sx.save(); sx.strokeStyle=EDGE; sx.shadowColor="rgba(95,227,255,0.8)"; sx.shadowBlur=6; sx.lineWidth=1.4;
+  sx.beginPath(); sx.arc(ex,ey,er,0,TAU); sx.stroke();
+  for(let i=0;i<16;i++){ const a=i/16*TAU; sx.beginPath(); sx.moveTo(ex,ey); sx.lineTo(ex+Math.cos(a)*er,ey+Math.sin(a)*er); sx.stroke(); } sx.restore();
+  sx.strokeStyle=silFill(b); sx.lineWidth=2.5; sx.beginPath(); sx.moveTo(ex-er*0.4,hy); sx.lineTo(ex,ey); sx.lineTo(ex+er*0.4,hy); sx.stroke();
+}
+function lmGeneric(C){ const {W,b,u,hy}=C;
+  const blocks=[[0.07,0.08,0.12],[0.16,0.07,0.21],[0.24,0.06,0.14],[0.33,0.07,0.25],[0.42,0.06,0.16],[0.52,0.07,0.29],[0.61,0.06,0.18],[0.70,0.08,0.23],[0.80,0.06,0.14],[0.88,0.07,0.19]];
+  blocks.forEach(([x,w,h],bi)=>{ box(W*x,hy-u*h,W*w,u*h);
+    for(let r=0;r<5;r++)for(let c=0;c<2;c++) if(((bi*3+r*2+c)%3)!==0) cityLight(W*x+W*w*(0.3+c*0.4),hy-u*h*(0.16+r*0.16),1,WARM); });
+}
+const LANDMARKS={egypt:lmEgypt, paris:lmParis, newyork:lmNY, tokyo:lmTokyo, london:lmLondon, generic:lmGeneric};
+
+function drawSkyline(W,H,b){
+  _B=b;
+  const u=Math.min(W,H), horizonY=H*0.82, CX=W*0.5, CY=H*0.4, SR=u*0.12;
+  const dg=sx.createLinearGradient(0,horizonY,0,H);                  // ground
+  dg.addColorStop(0,rgb(mixC([10,9,15],[40,40,52],b))); dg.addColorStop(1,rgb(mixC([2,2,5],[12,12,18],b)));
+  sx.fillStyle=dg; sx.fillRect(0,horizonY-1,W,H-horizonY+1);
+  const gridA=0.05+0.13*(1-b);                                       // holographic grid
   sx.save(); sx.strokeStyle=`rgba(95,210,255,${gridA})`; sx.lineWidth=1;
   for(let i=-9;i<=9;i++){ sx.beginPath(); sx.moveTo(W*0.5,horizonY); sx.lineTo(W*0.5+i*W*0.085,H); sx.stroke(); }
-  for(let j=1;j<=7;j++){ const t=j/7, y=horizonY+Math.pow(t,2.3)*(H-horizonY);
-    sx.globalAlpha=gridA*(1-t*0.5); sx.beginPath(); sx.moveTo(0,y); sx.lineTo(W,y); sx.stroke(); }
+  for(let j=1;j<=7;j++){ const t=j/7,y=horizonY+Math.pow(t,2.3)*(H-horizonY); sx.globalAlpha=gridA*(1-t*0.5); sx.beginPath(); sx.moveTo(0,y); sx.lineTo(W,y); sx.stroke(); }
   sx.restore();
-
-  // soft reflection of the eclipse on the sand
-  sx.save(); sx.globalCompositeOperation="lighter";
-  const rf=sx.createLinearGradient(0,horizonY,0,H);
-  rf.addColorStop(0,`rgba(200,220,255,${0.10*(1-b)+0.03})`); rf.addColorStop(1,"rgba(0,0,0,0)");
+  sx.save(); sx.globalCompositeOperation="lighter";                  // eclipse reflection on the ground
+  const rf=sx.createLinearGradient(0,horizonY,0,H); rf.addColorStop(0,`rgba(200,220,255,${0.10*(1-b)+0.03})`); rf.addColorStop(1,"rgba(0,0,0,0)");
   sx.fillStyle=rf; sx.fillRect(CX-SR*2,horizonY,SR*4,H-horizonY); sx.restore();
-
-  // premium pyramid: gradient faces + corona rim + cyan energy seam, aerial-haze by depth
-  const sky=mixC([26,34,60],[150,158,180],b);
-  function pyramid(px,w,h,depth){
-    const ay=horizonY-h, lx=px-w/2, rx=px+w/2;
-    const baseC=mixC(mixC([7,7,12],[34,27,24],b), sky, depth*0.55), litC=mixC(baseC,[235,228,205],0.16-depth*0.1), shC=mixC(baseC,[0,0,0],0.4);
-    let g=sx.createLinearGradient(0,ay,0,horizonY); g.addColorStop(0,rgb(litC)); g.addColorStop(1,rgb(baseC));
-    sx.fillStyle=g; sx.beginPath(); sx.moveTo(px,ay); sx.lineTo(lx,horizonY); sx.lineTo(px,horizonY); sx.closePath(); sx.fill();
-    g=sx.createLinearGradient(0,ay,0,horizonY); g.addColorStop(0,rgb(mixC(shC,[0,0,0],0.15))); g.addColorStop(1,rgb(shC));
-    sx.fillStyle=g; sx.beginPath(); sx.moveTo(px,ay); sx.lineTo(px,horizonY); sx.lineTo(rx,horizonY); sx.closePath(); sx.fill();
-    const k=1-depth;
-    sx.save(); sx.shadowColor="rgba(225,238,255,0.85)"; sx.shadowBlur=11*k; sx.strokeStyle=`rgba(238,244,255,${0.55*k})`; sx.lineWidth=1.4;
-    sx.beginPath(); sx.moveTo(lx,horizonY); sx.lineTo(px,ay); sx.lineTo(rx,horizonY); sx.stroke(); sx.restore();
-    sx.save(); sx.shadowColor="rgba(95,227,255,0.9)"; sx.shadowBlur=9*k; sx.strokeStyle=`rgba(120,225,255,${0.5*k})`; sx.lineWidth=1.1;
-    sx.beginPath(); sx.moveTo(px,ay); sx.lineTo(px,horizonY); sx.stroke(); sx.restore();
-  }
-  pyramid(W*0.74,u*0.055,u*0.045,0.7); pyramid(W*0.775,u*0.05,u*0.04,0.72); pyramid(W*0.81,u*0.045,u*0.035,0.74); // distant
-  pyramid(W*0.655,u*0.19,u*0.14,0.4);
-  pyramid(W*0.55,u*0.30,u*0.22,0.2);
-  pyramid(W*0.40,u*0.36,u*0.27,0.0);                 // Great Pyramid (front)
-
-  // light beam from the Great Pyramid apex toward the eclipse
-  const apx=W*0.40, apy=horizonY-u*0.27, bw=u*0.02;
-  sx.save(); sx.globalCompositeOperation="lighter";
-  const bg=sx.createLinearGradient(0,apy,0,CY);
-  bg.addColorStop(0,`rgba(150,225,255,${0.28+0.22*(1-b)})`); bg.addColorStop(1,"rgba(150,225,255,0)");
-  sx.fillStyle=bg; sx.beginPath(); sx.moveTo(apx-bw*0.35,CY); sx.lineTo(apx+bw*0.35,CY); sx.lineTo(apx+bw,apy); sx.lineTo(apx-bw,apy); sx.closePath(); sx.fill();
-  sx.restore();
-
-  // sleek obelisks with glowing capstones
-  function obelisk(x,h){ const w=u*0.02, by=horizonY;
-    const g=sx.createLinearGradient(0,by-h,0,by); g.addColorStop(0,rgb(mixC([22,20,26],[46,38,40],b))); g.addColorStop(1,rgb(mixC([5,5,9],[18,14,16],b)));
-    sx.fillStyle=g; sx.beginPath(); sx.moveTo(x-w/2,by); sx.lineTo(x-w*0.34,by-h*0.85); sx.lineTo(x,by-h); sx.lineTo(x+w*0.34,by-h*0.85); sx.lineTo(x+w/2,by); sx.closePath(); sx.fill();
-    sx.save(); sx.shadowColor="rgba(255,200,110,0.95)"; sx.shadowBlur=12; sx.fillStyle="rgba(255,214,140,0.95)";
-    sx.beginPath(); sx.arc(x,by-h*0.9,w*0.3,0,TAU); sx.fill(); sx.restore(); }
-  obelisk(W*0.075,u*0.28); obelisk(W*0.13,u*0.22);
-
-  // hovering light-orbs (away from the Sun)
-  sx.save(); sx.globalCompositeOperation="lighter";
-  for(const o of [[0.24,0.58],[0.70,0.52],[0.88,0.46]]){ const ox=o[0]*W, oy=o[1]*H, r=u*0.018;
-    const gr=sx.createRadialGradient(ox,oy,0,ox,oy,r); gr.addColorStop(0,"rgba(160,230,255,0.85)"); gr.addColorStop(1,"rgba(160,230,255,0)");
-    sx.fillStyle=gr; sx.beginPath(); sx.arc(ox,oy,r,0,TAU); sx.fill(); }
-  sx.restore();
+  (LANDMARKS[(observer&&observer.theme)||'egypt']||lmEgypt)({W,H,b,u,hy:horizonY,CX,CY});  // city-specific landmarks
 }
 
 // ---- LUNAR eclipse from the surface: full Moon + Earth's shadow → blood moon ----
@@ -1259,7 +1302,7 @@ function drawLunarSurface(W,H){
   ug.addColorStop(0.92,"rgba(60,20,14,0.9)"); ug.addColorStop(1,"rgba(40,16,16,0)");
   sx.fillStyle=ug; sx.beginPath(); sx.arc(shx,shy,umbraPx,0,TAU); sx.fill();
   sx.restore();
-  drawEgypt(W,H,bFg);
+  drawSkyline(W,H,bFg);
   document.getElementById('sKind').textContent = lv.kind==="—"?"Full Moon · no eclipse":lv.kind+" lunar eclipse";
   document.getElementById('sCov').textContent  = (lv.cover*100|0)+"% of Moon in shadow · "+fmtDate(dayToDate(simDay));
 }
@@ -1418,6 +1461,16 @@ const gCv=document.getElementById('globeCanvas');
 let gpin=null, globeActive=false, gInit=false, gRenderer, gScene, gCam, gControls, gEarth, gClouds, gLight, gPin, gSun, gComposer, gBloom;
 const fmtLat=v=>Math.abs(v).toFixed(1)+'°'+(v>=0?'N':'S'), fmtLon=v=>Math.abs(v).toFixed(1)+'°'+(v>=0?'E':'W');
 const g3=(lat,lon)=>{ const la=lat*D2R,lo=lon*D2R,cl=Math.cos(la); return [cl*Math.sin(lo),Math.sin(la),cl*Math.cos(lo)]; };
+const CITIES=[                                            // recommended observing sites (themed surface views)
+  {label:'🇪🇬 Cairo 開羅',     lat:30.0, lon:31.2,  theme:'egypt'},
+  {label:'🇫🇷 Paris 巴黎',     lat:48.86,lon:2.35,  theme:'paris'},
+  {label:'🇺🇸 New York 紐約',  lat:40.71,lon:-74.0, theme:'newyork'},
+  {label:'🇯🇵 Tokyo 東京',     lat:35.68,lon:139.7, theme:'tokyo'},
+  {label:'🇬🇧 London 倫敦',    lat:51.5, lon:-0.13, theme:'london'},
+];
+function globeFace(lat,lon){ if(!gCam) return; const d=gCam.position.length()||4.4, v=g3(lat,lon);
+  gCam.position.set(v[0]*d,v[1]*d,v[2]*d); if(gControls) gControls.update(); }
+function pickCity(c){ gpin={lat:c.lat,lon:c.lon,theme:c.theme}; globeFace(c.lat,c.lon); obsReadout(); }
 function glowMarker(color,scale){ const s=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color,
   transparent:true,blending:THREE.AdditiveBlending,depthWrite:false})); s.scale.set(scale,scale,1); return s; }
 function initGlobe(){
@@ -1452,7 +1505,9 @@ function initGlobe(){
   gCv.addEventListener('pointerup',e=>{ if(!dn||Math.hypot(e.clientX-dn[0],e.clientY-dn[1])>5){ dn=null; return; } dn=null;
     const r=gCv.getBoundingClientRect(); pt.set(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
     ray.setFromCamera(pt,gCam); const h=ray.intersectObject(gEarth);
-    if(h.length){ const p=h[0].point.clone().normalize(); gpin={lat:Math.asin(Math.max(-1,Math.min(1,p.y)))*R2D, lon:Math.atan2(p.x,p.z)*R2D}; obsReadout(); } });
+    if(h.length){ const p=h[0].point.clone().normalize(); gpin={lat:Math.asin(Math.max(-1,Math.min(1,p.y)))*R2D, lon:Math.atan2(p.x,p.z)*R2D, theme:'generic'}; obsReadout(); } });
+  const cd=document.getElementById('globeCities');                  // recommended-city chips
+  CITIES.forEach(c=>{ const btn=document.createElement('button'); btn.textContent=c.label; btn.onclick=()=>pickCity(c); cd.appendChild(btn); });
 }
 function gResize(){ if(!gInit) return; const w=gCv.clientWidth||480,h=gCv.clientHeight||480, d=Math.min(devicePixelRatio||1,2);
   gRenderer.setPixelRatio(d); gRenderer.setSize(w,h,false); gCam.aspect=w/h; gCam.updateProjectionMatrix(); }
@@ -1471,7 +1526,7 @@ function openGlobe(){ if(globeActive) return; globeActive=true; playing=false; p
 function closeGlobe(){ globeActive=false; document.getElementById('globe').classList.remove('show'); }
 addEventListener('resize',()=>{ if(globeActive) gResize(); });
 document.getElementById('exitGlobe').onclick=closeGlobe;
-document.getElementById('useObs').onclick=()=>{ if(gpin) observer={lat:gpin.lat,lon:gpin.lon}; updateBadge(); closeGlobe(); enterSurface(); };
+document.getElementById('useObs').onclick=()=>{ if(gpin) observer={lat:gpin.lat,lon:gpin.lon,theme:gpin.theme||'generic'}; updateBadge(); closeGlobe(); enterSurface(); };
 document.getElementById('bestObs').onclick=()=>{ observer=null; updateBadge(); closeGlobe(); enterSurface(); };
 document.getElementById('earthBtn').onclick=openGlobe;
 
