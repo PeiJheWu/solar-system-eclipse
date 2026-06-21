@@ -71,7 +71,8 @@ Single self-contained `index.html` — no build step.
   API) and the **next upcoming launches** with live countdowns (The Space Devs · Launch Library 2),
   filterable by NASA / SpaceX / ESA / China / Moon / Mars. **Agencies** opens a cinematic, accent-themed
   **profile dossier** for each major organisation — NASA, ESA, SpaceX, Roscosmos, CNSA, JAXA, ISRO,
-  Blue Origin, Rocket Lab — with a glowing emblem, founding/HQ/type, a milestones timeline and current
+  Blue Origin, Rocket Lab — with a glowing emblem, the **official logo**, founding/HQ/type, a milestones
+  timeline, **a gallery of historical mission photos with captions** (Wikimedia Commons), and current
   programs. (Live feeds fetched client-side and cached briefly; they degrade gracefully if unavailable.)
 - **⏪ Reverse time.** Run the gravitational clock **backwards** as well as forwards — the symplectic
   integrator is time-reversible (energy holds to ~10⁻¹⁶ either way), so you can rewind orbits and the

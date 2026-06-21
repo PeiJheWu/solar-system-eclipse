@@ -241,7 +241,14 @@
   .agCard::before,.agCard::after{content:"";position:absolute;width:22px;height:22px;border:2px solid var(--accent);opacity:.8}
   .agCard::before{top:11px;left:11px;border-right:none;border-bottom:none;border-radius:6px 0 0 0}
   .agCard::after{bottom:11px;right:11px;border-left:none;border-top:none;border-radius:0 0 6px 0}
-  .agHead{display:flex;align-items:center;gap:20px;margin-bottom:20px}
+  .agHead{display:flex;align-items:center;gap:20px;margin-bottom:20px;flex-wrap:wrap}
+  .agLogo{height:44px;max-width:150px;object-fit:contain;margin-left:auto;align-self:center;
+    background:rgba(255,255,255,.92);border-radius:9px;padding:7px 11px;box-shadow:0 2px 14px rgba(0,0,0,.4)}
+  .agGallery{display:flex;flex-direction:column;gap:14px}
+  .agShot{border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;background:rgba(255,255,255,.03)}
+  .agShot img{display:block;width:100%;height:210px;object-fit:cover;background:#06080f}
+  .agShot .cap{font-size:12px;color:#cdd6ec;line-height:1.55;padding:10px 14px}
+  .agShot .cap b{color:var(--accent);font-weight:600;font-family:var(--mono);font-size:11px;display:block;margin-bottom:3px;letter-spacing:.5px}
   .agEmblem{width:88px;height:88px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;
     border:2px solid var(--accent);position:relative;
     background:radial-gradient(circle at 50% 38%, color-mix(in srgb,var(--accent) 30%, transparent), transparent 70%);
@@ -495,10 +502,13 @@
         <h2 id="agName"></h2>
         <div class="agMeta" id="agMeta"></div>
       </div>
+      <img id="agLogo" class="agLogo" alt="" />
     </div>
     <p class="agIntro" id="agIntro"></p>
     <h3>Milestones</h3>
     <div class="agTimeline" id="agMilestones"></div>
+    <h3 id="agGalH">In pictures · history &amp; missions</h3>
+    <div class="agGallery" id="agGallery"></div>
     <h3>Active programs</h3>
     <div class="agTags" id="agPrograms"></div>
     <a class="agLink" id="agSite" target="_blank" rel="noopener noreferrer">Official site ↗</a>
@@ -1798,6 +1808,41 @@ const AGENCIES=[
     milestones:[["2006","Founded by Peter Beck"],["2018","Electron — first dedicated small-launcher to reach orbit commercially"],["2023","Launches NASA's CAPSTONE toward lunar orbit"],["Now","Developing the reusable Neutron rocket"]],
     programs:["Electron","Neutron (in dev)","Photon bus","Space systems"], site:"https://www.rocketlabusa.com"},
 ];
+const commonsImg=(f,w)=>'https://commons.wikimedia.org/wiki/Special:FilePath/'+encodeURIComponent(f)+'?width='+(w||800);
+const AGENCY_MEDIA={   // logo + captioned historical gallery (Wikimedia Commons; logos are trademarks of their owners)
+  "NASA":{logo:"NASA_logo.svg", gallery:[
+    ["NASA-Apollo8-Dec24-Earthrise.jpg","Earthrise — Apollo 8 photographs Earth rising over the Moon, 1968."],
+    ["Aldrin_Apollo_11_original.jpg","Apollo 11 — Buzz Aldrin on the lunar surface, July 1969."],
+    ["View of Hubble after Being Released from the Shuttle Atlantis (28223588012).jpg","The Hubble Space Telescope, released after its final servicing, 2009."]]},
+  "ESA":{logo:"ESA_logo_simple.svg", gallery:[
+    ["Comet_67P_on_19_September_2014_NavCam_mosaic.jpg","Comet 67P/Churyumov–Gerasimenko, imaged by Rosetta, 2014."],
+    ["Philae_lander_(transparent_bg).png","Philae — the first spacecraft to soft-land on a comet, 2014."],
+    ["Ariane 5 Rollout with James Webb Space Telescope (NHQ202112230001).jpg","Ariane 5 rolls out to launch the James Webb Space Telescope, 2021."]]},
+  "SPX":{logo:"SpaceX-Logo.svg", gallery:[
+    ["SpaceX_Demo-2_Launch_(NHQ202005300044).jpg","Crew Dragon Demo-2 — the first crewed orbital flight by a private company, 2020."],
+    ["Falcon 9 first stage at LZ-1(two).jpg","Falcon 9 first stages back at Landing Zone 1 — routine booster reuse."],
+    ["SpaceX Falcon Heavy on the Launch Pad.jpg","Falcon Heavy on the pad — among the most powerful operational rockets."]]},
+  "РК":{logo:"Roscosmos_logo_en.svg", gallery:[
+    ["Sputnik_asm.jpg","Sputnik 1 (replica) — the first artificial satellite, 1957."],
+    ["Yuri_Gagarin_(1961)_-_Restoration.jpg","Yuri Gagarin — the first human in space, 12 April 1961."],
+    ["Soyuz_TMA-9_launch.jpg","A Soyuz rocket lifts off from Baikonur — still ferrying crews today."]]},
+  "CNSA":{gallery:[
+    ["Chinese Tiangong Space Station.jpg","The Tiangong space station, completed in orbit, 2022."],
+    ["Yutu-2.jpg","Yutu-2 — the first rover to explore the lunar far side (Chang'e 4, 2019)."],
+    ["Tianwen-1 Lander and Zhurong Rover in Southern Utopia Planitia.jpg","Zhurong rover and the Tianwen-1 lander on Mars, seen from orbit."]]},
+  "JAXA":{logo:"Jaxa_logo.svg", gallery:[
+    ["Hayabusa2 approaching asteroid.jpg","Hayabusa2 closes in on asteroid Ryugu, 2018."],
+    ["Asteroid (25143) Itokawa seen in close-up (eso1405b).jpg","Asteroid Itokawa — sampled by the original Hayabusa, 2005."]]},
+  "ISRO":{logo:"Indian_Space_Research_Organisation_Logo.svg", gallery:[
+    ["Chandrayaan 3 Vikram lander stereo (53167467822).png","Chandrayaan-3's Vikram lander near the lunar south pole, 2023."],
+    ["Mars Orbiter Mission Spacecraft.jpg","The Mars Orbiter Mission (Mangalyaan) — India reached Mars on its first attempt, 2014."]]},
+  "BO":{gallery:[
+    ["Blue Origin New Glenn Rocket Successful Launch (9387521).jpg","New Glenn — Blue Origin's heavy-lift orbital rocket reaches space, 2025."],
+    ["Mike Pence & New Shepard.jpg","A New Shepard crew capsule — Blue Origin's reusable suborbital vehicle."]]},
+  "RL":{logo:"Rocket_Lab_logo.svg", gallery:[
+    ["TROPICS Rocket Launch (KSC-20230526-PH-RKL01 0002).jpg","An Electron rocket lifts off carrying a NASA payload."],
+    ["Rocket Lab Launch Complex 1.jpg","Rocket Lab's Launch Complex 1 on New Zealand's Māhia Peninsula."]]},
+};
 let agIdx=0;
 function renderAgencyGrid(){ const list=document.getElementById('newsList');
   list.innerHTML='<div class="nsub">🏛 Agencies &amp; companies</div>'+AGENCIES.map((a,i)=>
@@ -1817,6 +1862,14 @@ function openAgency(i){ agIdx=(i+AGENCIES.length)%AGENCIES.length; const a=AGENC
   document.getElementById('agMilestones').innerHTML=a.milestones.map(m=>`<div class="agTl"><div class="yr">${escH(m[0])}</div><div class="ev">${escH(m[1])}</div></div>`).join('');
   document.getElementById('agPrograms').innerHTML=a.programs.map(p=>`<span>${escH(p)}</span>`).join('');
   document.getElementById('agSite').href=/^https?:\/\//.test(a.site)?a.site:'#';
+  const m=AGENCY_MEDIA[a.acro]||{}, logo=document.getElementById('agLogo');   // official logo + historical gallery
+  if(m.logo){ logo.style.display=''; logo.onerror=()=>{logo.style.display='none';}; logo.src=commonsImg(m.logo,260); }
+  else logo.style.display='none';
+  const gal=document.getElementById('agGallery'), galH=document.getElementById('agGalH');
+  if(m.gallery&&m.gallery.length){ galH.style.display=''; gal.style.display='';
+    gal.innerHTML=m.gallery.map(g=>`<figure class="agShot"><img loading="lazy" src="${commonsImg(g[0],820)}" alt=""><figcaption class="cap">${escH(g[1])}</figcaption></figure>`).join('');
+    gal.querySelectorAll('img').forEach(im=>im.onerror=()=>{ const f=im.closest('.agShot'); if(f) f.style.display='none'; });
+  } else { galH.style.display='none'; gal.style.display='none'; gal.innerHTML=''; }
   ag.classList.add('show'); const card=ag.querySelector('.agCard'); if(card) card.scrollTop=0;
 }
 function closeAgency(){ document.getElementById('agency').classList.remove('show'); }
