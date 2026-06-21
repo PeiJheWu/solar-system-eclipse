@@ -403,16 +403,18 @@
   body.surface #obsBadge.show{display:block;top:auto;bottom:92px}
 
   /* ---- left-edge agency dock (direct access) ---- */
-  #agencyDock{position:fixed;left:14px;top:124px;z-index:6;display:flex;flex-direction:column;gap:2px;
-    max-height:calc(100vh - 230px);overflow-y:auto;scrollbar-width:thin;
+  #watchDock{position:fixed;left:14px;top:120px;z-index:6;display:flex;flex-direction:column;gap:2px;
+    max-height:calc(100vh - 220px);overflow-y:auto;scrollbar-width:thin;
     background:var(--panel);border:1px solid var(--panel-bd);border-radius:14px;padding:9px 8px;
     backdrop-filter:blur(14px);box-shadow:0 8px 40px rgba(0,0,0,.45)}
   .agDockH{font-family:var(--mono);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);padding:2px 9px 7px}
-  #agencyDock .dockItem{display:flex;align-items:center;gap:9px;background:none;border:none;color:var(--text);cursor:pointer;
+  #watchDock .dockItem{display:flex;align-items:center;gap:9px;background:none;border:none;color:var(--text);cursor:pointer;width:100%;
     font-size:12px;font-family:var(--mono);padding:7px 10px;border-radius:9px;text-align:left;white-space:nowrap;transition:.13s}
-  #agencyDock .dockItem:hover{background:rgba(95,227,255,.13);transform:translateX(2px)}
-  #agencyDock .agDot{width:9px;height:9px;border-radius:50%;flex:none}
-  body.surface #agencyDock{display:none}
+  #watchDock .dockItem:hover{background:rgba(95,227,255,.13);transform:translateX(2px)}
+  #watchDock .dockPlay{color:var(--cyan);font-size:9px;flex:none}
+  #watchDock .dockT{flex:1;overflow:hidden;text-overflow:ellipsis;max-width:152px}
+  #watchDock .dockDur{color:var(--muted);font-size:10px;flex:none;margin-left:6px}
+  body.surface #watchDock{display:none}
 
   /* ---- planet info viewer (professional space-site styling) ---- */
   #planetInfo{position:fixed;inset:0;z-index:15;display:flex;align-items:stretch;opacity:0;pointer-events:none;transition:opacity .45s;
@@ -491,7 +493,7 @@
     #globeLabels .globeLabel.city{font-size:9.5px;padding:3px 8px}
     #globeBar{bottom:14px;gap:8px;padding:9px 12px}
     #obsReadout{min-width:0;width:100%;font-size:11px}
-    #title,#forecast,#diagwrap,#agencyDock{display:none}
+    #title,#forecast,#diagwrap,#watchDock{display:none}
     .hint{display:none}
     #clock{top:10px;left:10px;right:10px;min-width:0;padding:10px 14px}
     #clock .date{font-size:18px}
@@ -608,7 +610,7 @@
 
 <div class="hint">drag = orbit · scroll = zoom · tap a planet → facts · 🌍 Earth = site · 🗺 path & Saros · 🔭 events · 📡 live space news</div>
 <div id="obsBadge"></div>
-<div id="agencyDock"></div>
+<div id="watchDock"></div>
 
 <div id="surface">
   <canvas id="surfaceCanvas"></canvas>
@@ -2011,10 +2013,10 @@ const AGENCY_MEDIA={   // logo + captioned historical gallery (Wikimedia Commons
 };
 let agIdx=0;
 const AG_SHORT={NASA:"NASA",ESA:"ESA",SPX:"SpaceX","РК":"Roscosmos",CNSA:"CNSA",JAXA:"JAXA",ISRO:"ISRO",BO:"Blue Origin",RL:"Rocket Lab"};
-function renderAgencyDock(){ const d=document.getElementById('agencyDock'); if(!d) return;
-  d.innerHTML='<div class="agDockH">◈ Agencies</div>'+AGENCIES.map((a,i)=>
-    `<button class="dockItem" data-i="${i}"><span class="agDot" style="background:${a.accent};box-shadow:0 0 8px ${a.accent}"></span>${escH(a.flag)} ${escH(AG_SHORT[a.acro]||a.name)}</button>`).join('');
-  d.querySelectorAll('.dockItem').forEach(b=>b.onclick=()=>openAgency(+b.dataset.i));
+function renderWatchDock(){ const d=document.getElementById('watchDock'); if(!d) return;   // left-edge quick-play video dock
+  d.innerHTML='<div class="agDockH">▶ Watch · SpaceX</div>'+SPACEX_VIDS.map((v,i)=>
+    `<button class="dockItem" data-i="${i}"><span class="dockPlay">▶</span><span class="dockT">${escH(v.t)}</span><span class="dockDur">${escH(v.d)}</span></button>`).join('');
+  d.querySelectorAll('.dockItem').forEach(b=>b.onclick=()=>openVid(SPACEX_VIDS[+b.dataset.i].id));
 }
 function renderAgencyGrid(){ const list=document.getElementById('newsList');
   list.innerHTML='<div class="nsub">🏛 Agencies &amp; companies</div>'+AGENCIES.map((a,i)=>
@@ -2050,7 +2052,6 @@ function closeAgency(){ document.getElementById('agency').classList.remove('show
 document.getElementById('agClose').onclick=closeAgency;
 document.getElementById('agPrev').onclick=()=>openAgency(agIdx-1);
 document.getElementById('agNext').onclick=()=>openAgency(agIdx+1);
-renderAgencyDock();
 /* ---- SpaceX short clips (≤10 min) — durations verified via the YouTube player ---- */
 const SPACEX_VIDS=[
   {id:"v9lAGmWhcZM",t:"To Make Life Multiplanetary",d:"1:49"},
@@ -2086,6 +2087,7 @@ document.querySelectorAll('#newsTabs button').forEach(b=>b.onclick=()=>{
   else if(tab==='watch'){ document.getElementById('newsFilters').style.display='none'; renderWatchGrid(); }
   else { document.getElementById('newsFilters').style.display=''; renderNewsFilters(); loadNews(); }
 });
+renderWatchDock();   // populate the left-edge video dock
 
 /* ============================================================
    GLOBE location picker — choose the observing site; all eclipse
