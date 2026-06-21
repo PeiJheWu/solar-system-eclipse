@@ -403,17 +403,21 @@
   body.surface #obsBadge.show{display:block;top:auto;bottom:92px}
 
   /* ---- left-edge agency dock (direct access) ---- */
-  #watchDock{position:fixed;left:14px;top:120px;z-index:6;display:flex;flex-direction:column;gap:2px;
-    max-height:calc(100vh - 220px);overflow-y:auto;scrollbar-width:thin;
-    background:var(--panel);border:1px solid var(--panel-bd);border-radius:14px;padding:9px 8px;
+  #watchDock{position:fixed;left:14px;top:118px;z-index:6;display:flex;flex-direction:column;gap:9px;width:182px;
+    max-height:min(430px, calc(100vh - 190px));overflow-y:auto;scrollbar-width:thin;
+    background:var(--panel);border:1px solid var(--panel-bd);border-radius:14px;padding:9px;
     backdrop-filter:blur(14px);box-shadow:0 8px 40px rgba(0,0,0,.45)}
-  .agDockH{font-family:var(--mono);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);padding:2px 9px 7px}
-  #watchDock .dockItem{display:flex;align-items:center;gap:9px;background:none;border:none;color:var(--text);cursor:pointer;width:100%;
-    font-size:12px;font-family:var(--mono);padding:7px 10px;border-radius:9px;text-align:left;white-space:nowrap;transition:.13s}
-  #watchDock .dockItem:hover{background:rgba(95,227,255,.13);transform:translateX(2px)}
-  #watchDock .dockPlay{color:var(--cyan);font-size:9px;flex:none}
-  #watchDock .dockT{flex:1;overflow:hidden;text-overflow:ellipsis;max-width:152px}
-  #watchDock .dockDur{color:var(--muted);font-size:10px;flex:none;margin-left:6px}
+  .agDockH{font-family:var(--mono);font-size:9px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted);padding:1px 3px 1px}
+  #watchDock .dockItem{display:block;width:100%;padding:0;background:none;border:none;cursor:pointer;transition:.15s}
+  #watchDock .dockItem:hover{transform:translateY(-2px)}
+  #watchDock .dockThumb{position:relative;display:block;aspect-ratio:16/9;border-radius:9px;overflow:hidden;border:1px solid var(--panel-bd);background:#06080f}
+  #watchDock .dockThumb img{width:100%;height:100%;object-fit:cover;display:block}
+  #watchDock .dockItem:hover .dockThumb{border-color:var(--cyan);box-shadow:0 0 14px rgba(95,227,255,.22)}
+  #watchDock .dockPlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff;text-shadow:0 0 10px rgba(0,0,0,.85);opacity:.9;transition:.15s}
+  #watchDock .dockItem:hover .dockPlay{opacity:1;color:var(--cyan);transform:scale(1.12)}
+  #watchDock .dockDur{position:absolute;right:5px;bottom:5px;background:rgba(0,0,0,.82);color:#fff;font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px}
+  #watchDock .dockT{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+    font-size:10.5px;line-height:1.3;color:var(--text);font-family:var(--mono);padding:5px 2px 1px;text-align:left;white-space:normal}
   body.surface #watchDock{display:none}
 
   /* ---- planet info viewer (professional space-site styling) ---- */
@@ -2013,9 +2017,9 @@ const AGENCY_MEDIA={   // logo + captioned historical gallery (Wikimedia Commons
 };
 let agIdx=0;
 const AG_SHORT={NASA:"NASA",ESA:"ESA",SPX:"SpaceX","РК":"Roscosmos",CNSA:"CNSA",JAXA:"JAXA",ISRO:"ISRO",BO:"Blue Origin",RL:"Rocket Lab"};
-function renderWatchDock(){ const d=document.getElementById('watchDock'); if(!d) return;   // left-edge quick-play video dock
+function renderWatchDock(){ const d=document.getElementById('watchDock'); if(!d) return;   // left-edge quick-play video dock (thumbnails, scroll for more)
   d.innerHTML='<div class="agDockH">▶ Watch · SpaceX</div>'+SPACEX_VIDS.map((v,i)=>
-    `<button class="dockItem" data-i="${i}"><span class="dockPlay">▶</span><span class="dockT">${escH(v.t)}</span><span class="dockDur">${escH(v.d)}</span></button>`).join('');
+    `<button class="dockItem" data-i="${i}"><span class="dockThumb"><img loading="lazy" src="https://i.ytimg.com/vi/${v.id}/mqdefault.jpg" alt=""><span class="dockPlay">▶</span><span class="dockDur">${escH(v.d)}</span></span><span class="dockT">${escH(v.t)}</span></button>`).join('');
   d.querySelectorAll('.dockItem').forEach(b=>b.onclick=()=>openVid(SPACEX_VIDS[+b.dataset.i].id));
 }
 function renderAgencyGrid(){ const list=document.getElementById('newsList');
