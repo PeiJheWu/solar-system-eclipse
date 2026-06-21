@@ -58,6 +58,12 @@ Single self-contained `index.html` — no build step.
   Moon bites into the Sun is the one you'd actually see standing there — a site near the central path
   sees a near-head-on cover, one far from it a slanted, shallow partial. Total vs. annular is decided
   by the Moon's real distance in the sim. (Any non-listed pin falls back to a drawn horizon.)
+- **🪐 Tap any planet for a fact sheet.** Click any of the 8 planets in the orbital view to open a
+  dedicated viewer: that planet rendered as a slowly-rotating, axially-tilted globe (real NASA texture,
+  Saturn's ring, Earth's clouds/atmosphere) beside a pop-sci panel — key stats (diameter, distance,
+  day/year length, moons, temperature), "did you know" facts, and a NASA exploration note (curated,
+  current to early 2026). Step through the planets with ‹ / › . (Earth's click still opens the
+  observing-site globe.)
 - **Responsive.** Adapts framing and HUD for desktop and mobile.
 
 ## 🎮 Controls

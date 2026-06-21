@@ -211,7 +211,42 @@
   #obsBadge.show{display:block}
   body.surface #obsBadge.show{display:block;top:auto;bottom:92px}
 
+  /* ---- planet info viewer ---- */
+  #planetInfo{position:fixed;inset:0;z-index:15;display:flex;align-items:stretch;opacity:0;pointer-events:none;transition:opacity .4s;
+    background:radial-gradient(120% 100% at 38% 30%, #0b1024, #05070f 60%, #020308 100%)}
+  #planetInfo.show{opacity:1;pointer-events:auto}
+  .phead{position:absolute;top:15px;left:0;right:0;text-align:center;font-family:var(--mono);font-size:15px;letter-spacing:1.5px;color:var(--text);z-index:17}
+  .phead button{position:absolute;right:18px;top:-4px;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer}
+  #planetCanvas{flex:1 1 54%;min-width:0;height:100%;touch-action:none;cursor:grab}
+  #planetFacts{flex:0 0 46%;max-width:600px;height:100%;overflow-y:auto;padding:62px 30px 44px;color:var(--text);
+    font-family:ui-sans-serif,system-ui,"Segoe UI",Roboto,"Microsoft JhengHei",sans-serif;scrollbar-width:thin;
+    border-left:1px solid var(--panel-bd);background:linear-gradient(90deg,transparent,rgba(8,12,24,.5))}
+  #planetFacts h2{font-size:29px;font-weight:700;letter-spacing:.4px;margin-bottom:3px}
+  #planetFacts .ptag{color:var(--cyan);font-family:var(--mono);font-size:12px;letter-spacing:.8px;margin-bottom:15px}
+  #planetFacts .pintro{font-size:14.5px;line-height:1.65;color:#c5d0e8;margin-bottom:20px}
+  #planetFacts .pstats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+  #planetFacts .pstat{background:var(--panel);border:1px solid var(--panel-bd);border-radius:10px;padding:8px 11px}
+  #planetFacts .pstat .k{font-size:10px;color:var(--muted);font-family:var(--mono);letter-spacing:.4px}
+  #planetFacts .pstat .v{font-size:14px;color:var(--text);margin-top:3px;font-weight:600}
+  #planetFacts h3{font-size:12px;font-family:var(--mono);color:var(--amber);letter-spacing:1px;margin:20px 0 9px}
+  #planetFacts ul{list-style:none;display:flex;flex-direction:column;gap:8px}
+  #planetFacts li{font-size:13.5px;line-height:1.55;color:#c5d0e8;padding-left:17px;position:relative}
+  #planetFacts li::before{content:"›";position:absolute;left:2px;color:var(--cyan)}
+  #planetFacts .pnasa{margin-top:18px;background:rgba(95,227,255,.06);border:1px solid var(--panel-bd);border-radius:12px;padding:13px 15px}
+  #planetFacts .pnasa .k{font-family:var(--mono);font-size:11px;color:var(--cyan);letter-spacing:.8px;margin-bottom:6px}
+  #planetFacts .pnasa .v{font-size:13.5px;line-height:1.6;color:#d2dcef}
+  #planetFacts .pnote{margin-top:15px;font-size:10.5px;color:var(--muted);line-height:1.5}
+  #planetNav{position:absolute;bottom:18px;left:calc(27% - 0px);transform:translateX(-50%);display:flex;gap:8px;z-index:17}
+  #planetNav button{background:var(--panel);border:1px solid var(--panel-bd);color:var(--text);border-radius:10px;
+    padding:8px 14px;cursor:pointer;font-family:var(--mono);font-size:12px;backdrop-filter:blur(10px)}
+  #planetNav button:hover{background:rgba(95,227,255,.2);border-color:var(--cyan)}
+
   @media (max-width:780px){
+    #planetInfo{flex-direction:column}
+    #planetCanvas{flex:0 0 42vh;width:100%;height:42vh}
+    #planetFacts{flex:1 1 auto;max-width:none;width:100%;height:auto;border-left:none;border-top:1px solid var(--panel-bd);padding:16px 16px 84px}
+    #planetFacts h2{font-size:23px}
+    #planetNav{left:50%;bottom:14px}
     #title,#forecast,#diagwrap{display:none}
     .hint{display:none}
     #clock{top:10px;left:10px;right:10px;min-width:0;padding:10px 14px}
@@ -272,7 +307,7 @@
   <button id="viewBtn" title="Best viewing — opposition & greatest elongation">🔭</button>
 </div>
 
-<div class="hint">drag = orbit · scroll = zoom · space = play/pause · 🌍 site · 🗺 path & Saros · 🔭 events</div>
+<div class="hint">drag = orbit · scroll = zoom · space = play/pause · tap a planet → facts · 🌍 Earth = site · 🗺 path & Saros · 🔭 events</div>
 <div id="obsBadge"></div>
 
 <div id="surface">
@@ -307,6 +342,13 @@
     <button id="useObs">Observe from here →</button>
     <button id="bestObs">Best spot (geocentric)</button>
   </div>
+</div>
+
+<div id="planetInfo">
+  <div class="phead"><span id="pTitle">Planet</span><button id="exitPlanet">✕</button></div>
+  <canvas id="planetCanvas"></canvas>
+  <div id="planetNav"><button id="pPrev">‹ 上一顆</button><button id="pNext">下一顆 ›</button></div>
+  <div id="planetFacts"></div>
 </div>
 
 <script type="importmap">
@@ -1007,7 +1049,7 @@ function tick(now){
 
   corona1.material.rotation += dt*0.05;
   controls.update();
-  if(globeActive) renderGlobe(); else composer.render();
+  if(planetActive) renderPlanet(); else if(globeActive) renderGlobe(); else composer.render();
 
   drawDiagram(e,b);
   renderReadout(e,b);
@@ -1354,9 +1396,11 @@ document.getElementById('exitEarth').onclick=exitSurface;
 const _ray=new THREE.Raycaster(), _pt=new THREE.Vector2(); let _dx=0,_dy=0;
 canvas.addEventListener('pointerdown',e=>{_dx=e.clientX;_dy=e.clientY;});
 canvas.addEventListener('pointerup',e=>{
-  if(surfaceActive || Math.hypot(e.clientX-_dx,e.clientY-_dy)>6) return;
+  if(surfaceActive || planetActive || globeActive || Math.hypot(e.clientX-_dx,e.clientY-_dy)>6) return;
   _pt.set((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1); _ray.setFromCamera(_pt,camera);
-  if(_ray.intersectObject(bodies[2],true).length) openGlobe();
+  const hits=_ray.intersectObjects(bodies,true);                        // any planet → Earth opens the globe, others open the info viewer
+  if(hits.length){ let o=hits[0].object; while(o && !(o.userData&&o.userData.p)) o=o.parent;
+    if(o){ if(o===bodies[2]) openGlobe(); else openPlanetInfo(o.userData.p.name); } }
 });
 
 /* ============================================================
@@ -1567,6 +1611,135 @@ document.getElementById('useObs').onclick=()=>{ if(gpin) observer={lat:gpin.lat,
 document.getElementById('bestObs').onclick=()=>{ observer=null; updateBadge(); closeGlobe(); enterSurface(); };
 document.getElementById('earthBtn').onclick=openGlobe;
 
+/* ============================================================
+   PLANET INFO VIEWER — click any planet → rotating planet + NASA / pop-sci facts
+   ============================================================ */
+const PLANET_NOTE="科普資料由 NASA／公開資料整理（更新至 2026 年初），非即時連線。";
+const PLANET_FACTS={
+  Mercury:{cn:"水星",tag:"類地行星 · 最內側 / Terrestrial",
+    intro:"離太陽最近、也是最小的行星。沒有大氣、布滿撞擊坑，日夜溫差是全太陽系最劇烈的。",
+    stats:[["直徑 Diameter","4,879 km"],["距太陽","0.39 AU"],["自轉日","176 地球日"],["公轉年","88 地球日"],["衛星","0"],["均溫","−173～427°C"]],
+    facts:["一年（88 天）比一個太陽日（176 天）還短——每公轉 2 圈剛好自轉 3 圈。",
+      "雖然離太陽最近，卻不是最熱的行星——最熱的是金星（厚大氣保溫）。",
+      "兩極永遠曬不到太陽的坑底藏有水冰。",
+      "鐵核佔半徑約 85%，是顆名副其實的「大鐵球」。"],
+    nasa:"NASA 的 MESSENGER 於 2011–2015 環繞並完整測繪水星。歐日合作的 BepiColombo（2018 發射）預計 2026 年底進入水星軌道。"},
+  Venus:{cn:"金星",tag:"類地行星 · 地球的孿生兄弟",
+    intro:"大小與地球相近，卻被濃厚的二氧化碳大氣與硫酸雲包裹，是全太陽系表面最熱的行星。",
+    stats:[["直徑 Diameter","12,104 km"],["距太陽","0.72 AU"],["自轉日","243 地球日（逆行）"],["公轉年","225 地球日"],["衛星","0"],["均溫","464°C"]],
+    facts:["自轉是反方向（逆行）且極慢——「一天」比「一年」還長。",
+      "表面氣壓約為地球的 92 倍，相當於在海面下 900 公尺。",
+      "失控的溫室效應讓表面熱到足以熔化鉛。",
+      "2020 年雲層中疑似偵測到磷化氫，引發是否有空中微生物的爭論——尚未證實。"],
+    nasa:"NASA 正開發 DAVINCI（大氣探測器）與 VERITAS（雷達測繪），加上歐洲的 EnVision，預計 2030 年前後發射重返金星。"},
+  Earth:{cn:"地球",tag:"類地行星 · 已知唯一有生命的世界",
+    intro:"目前已知唯一孕育生命的行星——擁有液態海洋、保護性磁場與可呼吸的含氧大氣。",
+    stats:[["直徑 Diameter","12,742 km"],["距太陽","1.00 AU"],["自轉日","24 小時"],["公轉年","365.25 天"],["衛星","1"],["均溫","15°C"]],
+    facts:["表面 71% 是水，是唯一表面有液態海洋的行星。",
+      "大型的月球穩定了地軸傾角，使氣候相對穩定。",
+      "磁場偏轉太陽風，保護大氣與生命。",
+      "月球軌道的傾斜，正是「食」會成季出現的原因——可在本 App 中探索！"],
+    nasa:"NASA 一整隊地球觀測衛星持續監測氣候、海洋與冰層；Artemis 計畫正帶人類重返月球，Artemis II 載人繞月預計 2026 年左右執行。"},
+  Mars:{cn:"火星",tag:"類地行星 · 紅色行星",
+    intro:"寒冷的沙漠世界，擁有太陽系最大的火山與橫跨美洲般的峽谷——也是地球以外被探索最多的行星。",
+    stats:[["直徑 Diameter","6,779 km"],["距太陽","1.52 AU"],["自轉日","24.6 小時（1 sol）"],["公轉年","687 地球日"],["衛星","2"],["均溫","−63°C"]],
+    facts:["奧林帕斯山高約 22 km，約是聖母峰的 2.5 倍。",
+      "紅色來自土壤中的氧化鐵（鐵鏽）。",
+      "古河床與湖泊沉積顯示它曾擁有液態水。",
+      "兩顆小衛星可能是被捕獲的小行星；火衛一正緩緩向火星墜近。"],
+    nasa:"NASA 毅力號正在 Jezero 隕石坑採集樣本，為未來的火星採樣返回鋪路；機智號直升機完成外星首次動力飛行（共飛 72 次，2024 年任務結束）。好奇號仍在巡視。"},
+  Jupiter:{cn:"木星",tag:"氣態巨行星 · 最大的行星",
+    intro:"主要由氫與氦組成的巨球，質量比其他所有行星加起來還大，還有一場比地球還大、肆虐數百年的風暴。",
+    stats:[["直徑 Diameter","139,820 km"],["距太陽","5.20 AU"],["自轉日","9.9 小時（最快）"],["公轉年","11.9 地球年"],["衛星","95+"],["雲頂均溫","−110°C"]],
+    facts:["大紅斑是一場至少肆虐 350 年的風暴（目前正在縮小）。",
+      "自轉是所有行星中最快的——一天不到 10 小時。",
+      "四顆伽利略衛星是 1610 年伽利略的發現；木衛二（歐羅巴）冰殼下藏有海洋。",
+      "擁有暗淡的環，磁場強度約為地球的 2 萬倍。"],
+    nasa:"NASA 朱諾號正研究木星內部與極區；歐羅巴快船（2024 年 10 月發射）正前往評估木衛二的海洋是否適合生命（約 2030 抵達）。"},
+  Saturn:{cn:"土星",tag:"氣態巨行星 · 環圈之王",
+    intro:"以由冰與岩石組成的壯麗環系聞名，密度比水還小——理論上能浮在水面上。",
+    stats:[["直徑 Diameter","116,460 km"],["距太陽","9.55 AU"],["自轉日","10.7 小時"],["公轉年","29.4 地球年"],["衛星","140+（最多）"],["均溫","−140°C"]],
+    facts:["平均密度小於水——若有夠大的浴缸，它會浮起來。",
+      "環橫跨約 28 萬 km，厚度卻常只有約 10 公尺。",
+      "衛星泰坦有濃厚大氣與液態甲烷湖；恩克拉多斯從地下海洋噴出水汽。",
+      "目前是擁有最多已知衛星的行星。"],
+    nasa:"NASA 卡西尼號於 2004–2017 研究土星，最後戲劇性地墜入土星本體。NASA 的蜻蜓號（Dragonfly）核動力旋翼機正在打造，將飛越泰坦，預計 2028 年發射。"},
+  Uranus:{cn:"天王星",tag:"冰質巨行星 · 躺著轉的行星",
+    intro:"一顆「躺著自轉」的冰巨行星，可能源於遠古的劇烈撞擊；大氣中的甲烷讓它呈淡藍綠色。",
+    stats:[["直徑 Diameter","50,724 km"],["距太陽","19.2 AU"],["自轉日","17.2 小時（逆行）"],["公轉年","84 地球年"],["衛星","28"],["均溫","−195°C"]],
+    facts:["自轉軸傾斜 98°，幾乎是滾著繞太陽——每一極約有 42 年日照、42 年黑夜。",
+      "擁有太陽系最冷的大氣之一（最低約 −224°C）。",
+      "有暗淡的環，28 顆衛星以莎士比亞與波普作品角色命名。",
+      "至今僅被造訪過一次——航海家 2 號於 1986 年飛掠。"],
+    nasa:"「天王星軌道器與探測器」在 NASA 2023 年行星科學十年調查中被列為最高優先的旗艦任務概念——尚未發射。"},
+  Neptune:{cn:"海王星",tag:"冰質巨行星 · 風最強的行星",
+    intro:"最遙遠的行星，深藍色的冰巨行星，擁有太陽系最快的風——也是第一顆「用數學算出來」而非先用望遠鏡看到的行星。",
+    stats:[["直徑 Diameter","49,244 km"],["距太陽","30.1 AU"],["自轉日","16.1 小時"],["公轉年","165 地球年"],["衛星","16"],["均溫","−200°C"]],
+    facts:["超音速強風可達約 2,100 km/h——是已知太陽系最快的風。",
+      "1846 年靠預測它對天王星軌道的擾動而被「算」出來。",
+      "直到 2011 年才完成自發現以來的第一整圈公轉。",
+      "最大衛星崔頓逆向公轉、會噴發冰泉，很可能是被捕獲的古柏帶天體。"],
+    nasa:"與天王星一樣，僅被航海家 2 號造訪過（1989）。詹姆斯·韋伯太空望遠鏡自 2022 年起拍下其環與風暴的驚人新影像。"},
+};
+
+let planetActive=false, piInit=false, pCurrent="Earth", pRenderer, pScene, pCam, pControls, pBody;
+const pCv=document.getElementById('planetCanvas');
+function initPlanet(){
+  piInit=true;
+  pRenderer=new THREE.WebGLRenderer({canvas:pCv,antialias:true});
+  pRenderer.setClearColor(0x000000,0); pRenderer.toneMapping=THREE.ACESFilmicToneMapping; pRenderer.toneMappingExposure=1.08; pRenderer.outputColorSpace=THREE.SRGBColorSpace;
+  pScene=new THREE.Scene();
+  pCam=new THREE.PerspectiveCamera(38,1,0.1,100); pCam.position.set(0,0.35,3.4);
+  pControls=new OrbitControls(pCam,pCv); pControls.enableDamping=true; pControls.dampingFactor=0.08;
+  pControls.enablePan=false; pControls.minDistance=2.0; pControls.maxDistance=8; pControls.rotateSpeed=0.5; pControls.autoRotate=false;
+  pScene.add(makeStars(440,16,46,0.4,0.55));
+  pScene.add(new THREE.AmbientLight(0x33405e,0.85));
+  const key=new THREE.DirectionalLight(0xfff4e4,2.1); key.position.set(-5,2.5,4); pScene.add(key);
+  pBody=new THREE.Group(); pScene.add(pBody);
+}
+function planetSurfaceTex(name){      // reuse the main scene's already-decoded texture → no black flash
+  const i=PLANETS.findIndex(p=>p.name===name), grp=bodies[i]; let t=null;
+  if(grp) grp.traverse(o=>{ if(!t && o.isMesh && o.material && o.material.map) t=o.material.map; });
+  return t;
+}
+function buildPlanet(name){
+  while(pBody.children.length) pBody.remove(pBody.children[0]);
+  const spin=new THREE.Group(); spin.rotation.z=TILT[name]||0; pBody.add(spin); pBody.userData.spin=spin;
+  const opt={ map:planetSurfaceTex(name)||colorTex(TEX[name]), roughness:0.95, metalness:0.0 };
+  if(name==="Earth"){ opt.bumpMap=dataTex("earthbump1k.jpg"); opt.bumpScale=0.04; }
+  if(name==="Mars"||name==="Mercury") opt.roughness=1.0;
+  spin.add(new THREE.Mesh(new THREE.SphereGeometry(1,96,96), new THREE.MeshStandardMaterial(opt)));
+  if(name==="Earth"){
+    spin.add(new THREE.Mesh(new THREE.SphereGeometry(1.015,64,64),
+      new THREE.MeshStandardMaterial({map:colorTex("earthcloudmap.jpg"),alphaMap:colorTex("earthcloudmap.jpg"),transparent:true,depthWrite:false,roughness:1})));
+    spin.add(new THREE.Mesh(new THREE.SphereGeometry(1.16,48,48),atmosphereMat(0x6cb4ff)));
+  }
+  if(name==="Saturn") spin.add(saturnRing(1.3,2.35));
+  pCurrent=name;
+}
+function showFacts(name){
+  const f=PLANET_FACTS[name], el=document.getElementById('planetFacts'); el.scrollTop=0;
+  el.innerHTML=`<h2>${f.cn} · ${name}</h2><div class="ptag">${f.tag}</div>
+    <div class="pintro">${f.intro}</div>
+    <div class="pstats">${f.stats.map(s=>`<div class="pstat"><div class="k">${s[0]}</div><div class="v">${s[1]}</div></div>`).join('')}</div>
+    <h3>你知道嗎 · DID YOU KNOW</h3><ul>${f.facts.map(x=>`<li>${x}</li>`).join('')}</ul>
+    <div class="pnasa"><div class="k">🛰 NASA · 探索進度</div><div class="v">${f.nasa}</div></div>
+    <div class="pnote">${PLANET_NOTE}</div>`;
+  document.getElementById('pTitle').textContent=`🪐 ${f.cn} ${name}`;
+}
+function goPlanet(name){ if(!PLANET_FACTS[name]) name="Earth"; if(!piInit) initPlanet(); buildPlanet(name); showFacts(name); pResize(); }
+function openPlanetInfo(name){ if(globeActive) closeGlobe(); planetActive=true; playing=false; playBtn.textContent="▶";
+  document.getElementById('planetInfo').classList.add('show'); goPlanet(name); }
+function closePlanetInfo(){ planetActive=false; document.getElementById('planetInfo').classList.remove('show'); }
+function stepPlanet(d){ const o=PLANETS.map(p=>p.name); const i=o.indexOf(pCurrent); goPlanet(o[(i+d+o.length)%o.length]); }
+function pResize(){ if(!piInit) return; const w=pCv.clientWidth||480,h=pCv.clientHeight||480,dpr=Math.min(devicePixelRatio||1,2);
+  pRenderer.setPixelRatio(dpr); pRenderer.setSize(w,h,false); pCam.aspect=w/h; pCam.updateProjectionMatrix(); }
+function renderPlanet(){ if(pBody.userData.spin) pBody.userData.spin.rotation.y+=0.0016; pControls.update(); pRenderer.render(pScene,pCam); }
+addEventListener('resize',()=>{ if(planetActive) pResize(); });
+document.getElementById('exitPlanet').onclick=closePlanetInfo;
+document.getElementById('pPrev').onclick=()=>stepPlanet(-1);
+document.getElementById('pNext').onclick=()=>stepPlanet(1);
+
 /* ---- debug hook for verification ---- */
 window.__sim={ rev:THREE.REVISION,
   state:()=>({simDay,playing,speed,objects:scene.children.length,
@@ -1574,6 +1747,11 @@ window.__sim={ rev:THREE.REVISION,
   pause:()=>{playing=false;},
   step:()=>tick(performance.now()),
   photo:()=>{ const im=cityPhoto(); return { theme:(observer&&observer.theme)||null, loaded:!!im, dims:im?[im.naturalWidth,im.naturalHeight]:null }; },
+  openP:(n)=>openPlanetInfo(n),
+  planet:()=>({ active:planetActive, current:pCurrent, init:piInit,
+    rendererSize:piInit?[pRenderer.domElement.width,pRenderer.domElement.height]:null,
+    factTitle:document.getElementById('pTitle').textContent,
+    factHasContent:document.getElementById('planetFacts').innerHTML.length>200 }),
   ff:days=>advance(days),                       // integrate forward N days (verification)
   phys:()=>{ const d=[]; for(let i=0;i<8;i++){const k=i+1;
       d.push({name:PLANETS[i].name, rAU:+Math.hypot(state.x[k]-state.x[0],state.y[k]-state.y[0],state.z[k]-state.z[0]).toFixed(4)});}
