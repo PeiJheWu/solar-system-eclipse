@@ -1044,6 +1044,13 @@ controls.target.set(0,0,0);
 if(window.matchMedia && matchMedia('(pointer: coarse)').matches){
   controls.autoRotate = false; controls.rotateSpeed = 0.55; controls.zoomSpeed = 0.7;
 }
+// stop pinch-zoom and one-finger rotate from clashing: while ≥2 fingers are down it's a pinch
+// (zoom only); lock out rotation until ALL fingers lift, so ending a pinch never snaps into a spin.
+canvas.addEventListener('touchstart',e=>{ if(e.touches.length>=2) controls.enableRotate=false; },{passive:true});
+canvas.addEventListener('touchmove', e=>{ if(e.touches.length>=2) controls.enableRotate=false; },{passive:true});
+const _reRotate=e=>{ if(e.touches.length===0) controls.enableRotate=true; };
+canvas.addEventListener('touchend', _reRotate,{passive:true});
+canvas.addEventListener('touchcancel', _reRotate,{passive:true});
 
 /* ---- textures (real planet maps via jsDelivr · CORS-safe) ---- */
 const BASE="https://cdn.jsdelivr.net/gh/jeromeetienne/threex.planets/images/";
