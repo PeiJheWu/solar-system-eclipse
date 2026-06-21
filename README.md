@@ -40,18 +40,21 @@ Single self-contained `index.html` — no build step.
 - **Cinematic 3D rendering.** Three.js with real NASA-style planet textures, day/night terminators,
   a procedural granulating Sun, bloom, Saturn's ring, Earth's clouds + atmosphere, a Milky-Way
   backdrop and HUD labels that track each planet.
-- **🌍 Pick your observing site.** Click the Earth to open an interactive **globe** — rotate it and tap
-  to drop a pin anywhere, or pick a **recommended world city** (Cairo, Paris, New York, Tokyo, London)
-  with one tap. Every eclipse calculation then runs **topocentrically from that point**: real
-  lunar parallax (so the site sees its own total/partial/none), the **horizon** (the Sun may be below
-  it — "not visible, it's night here"), and "the next eclipse visible *from here*." Your pin is also
-  drawn on the totality-path map. (Geography is model coordinates, not real cities — see notes.)
-- **🌍 Enter Earth — themed by your city.** Drop onto the surface and watch the
-  eclipse unfold — for a solar eclipse the Moon crossing the Sun, sky darkening, corona and diamond
-  ring; for a lunar eclipse the full Moon reddening into a blood moon — over a **sci-fi skyline of the
-  city you chose**: the glowing pyramids of Cairo, the Eiffel Tower, the New York skyline with the
-  Statue of Liberty, Mt Fuji behind Tokyo Tower, or Big Ben and the London Eye (and a generic skyline
-  for any other pin). Total vs. annular is decided by the Moon's real distance in the sim.
+- **🌍 Pick your observing site.** Click the Earth to open an interactive **globe** — drag to rotate and
+  tap to drop a pin anywhere, or pick a **recommended world city** (Cairo, Paris, New York, Tokyo,
+  London) with one tap, which turns the globe to face that location. The pin lands on the **real
+  geographic position** on the Earth map (the lat/lon → sphere mapping matches the texture). Every
+  eclipse calculation then runs **topocentrically from that point**: real lunar parallax (so the site
+  sees its own total/partial/none), the **horizon** (the Sun may be below it — "not visible, it's
+  night here"), and "the next eclipse visible *from here*." Your pin is also drawn on the totality-path
+  map. (The *eclipse-engine* longitude frame is model coordinates, not tied to the map — see notes.)
+- **🌍 Enter Earth — over a real photo of your city.** Drop onto the surface and watch the eclipse
+  unfold over an **actual photograph of the place you chose** — the Giza pyramids, Paris with the
+  Eiffel Tower, the Lower-Manhattan skyline, the Shinjuku skyscrapers, or Westminster — which **darkens
+  toward an eerie twilight as totality nears**, with stars coming out and city lights switching on. The
+  Sun's Moon-crossing, corona and diamond ring (or the reddening blood-Moon for a lunar eclipse) play
+  out above the skyline. Total vs. annular is decided by the Moon's real distance in the sim. (Any
+  non-listed pin falls back to a drawn horizon.)
 - **Responsive.** Adapts framing and HUD for desktop and mobile.
 
 ## 🎮 Controls

@@ -1111,6 +1111,23 @@ const lerp=(a,b,t)=>a+(b-a)*t, mixC=(c1,c2,t)=>[lerp(c1[0],c2[0],t)|0,lerp(c1[1]
 
 const craters=[]; for(let i=0;i<14;i++){ const rr=Math.random()*0.78, aa=Math.random()*TAU;
   craters.push({x:Math.cos(aa)*rr, y:Math.sin(aa)*rr, r:0.04+Math.random()*0.11}); }
+// ---- real local photographs for the chosen city (user: 進入城市要真實環境照片) ----
+// Wikimedia Commons (display only; the canvas may taint cross-origin, which is fine for drawing).
+const PHOTO_SRC={ egypt:'All_Gizah_Pyramids.jpg', paris:"Paris_vue_d%27ensemble_tour_Eiffel.jpg",
+  newyork:'Lower_Manhattan_skyline_-_June_2017.jpg', tokyo:'Skyscrapers_of_Shinjuku_2009_January.jpg',
+  london:'Palace_of_Westminster,_London_-_Feb_2007.jpg' };
+const THEME_PHOTO={};
+function cityPhoto(){ const th=(observer&&observer.theme)||'', f=PHOTO_SRC[th]; if(!f) return null;
+  let im=THEME_PHOTO[th]; if(!im){ im=new Image(); im.src='https://commons.wikimedia.org/wiki/Special:FilePath/'+f+'?width=1600'; THEME_PHOTO[th]=im; }
+  return (im.complete && im.naturalWidth>0) ? im : null; }
+function drawPhotoBg(W,H,darkness,tint){      // cover-fit the photo + an eclipse darkening wash; returns false if not loaded
+  const img=cityPhoto(); if(!img) return false;
+  const ir=img.naturalWidth/img.naturalHeight, cr=W/H; let dw,dh;
+  if(ir>cr){ dh=H; dw=H*ir; } else { dw=W; dh=W/ir; }
+  sx.drawImage(img,(W-dw)/2,(H-dh)/2,dw,dh);
+  if(darkness>0){ sx.fillStyle=`rgba(${tint[0]},${tint[1]},${tint[2]},${darkness})`; sx.fillRect(0,0,W,H); }
+  return true;
+}
 function drawSurface(){
   const dpr=Math.min(devicePixelRatio||1,2), W=innerWidth, H=innerHeight;
   if(sCv.width!==(W*dpr|0)){ sCv.width=W*dpr; sCv.height=H*dpr; sx.setTransform(dpr,0,0,dpr,0,0); }
@@ -1119,25 +1136,29 @@ function drawSurface(){
 function drawSolarSurface(W,H){
   const ev=eclipseView(state);
   if(observer && !ev.visible){                 // chosen site is on the night side — Sun is down
-    const grd=sx.createLinearGradient(0,0,0,H); grd.addColorStop(0,rgb([4,6,16])); grd.addColorStop(1,rgb([14,16,34]));
-    sx.fillStyle=grd; sx.fillRect(0,0,W,H);
-    sx.fillStyle="#dfe6f5"; for(const s of sStars){ sx.globalAlpha=0.5+0.4*s.t; sx.beginPath(); sx.arc(s.x*W,s.y*H,s.r,0,TAU); sx.fill(); } sx.globalAlpha=1;
-    drawSkyline(W,H,0.06);
+    if(!drawPhotoBg(W,H,0.72,[4,6,18])){       // real city photo dimmed to night, else drawn night scene
+      const grd=sx.createLinearGradient(0,0,0,H); grd.addColorStop(0,rgb([4,6,16])); grd.addColorStop(1,rgb([14,16,34]));
+      sx.fillStyle=grd; sx.fillRect(0,0,W,H);
+      sx.fillStyle="#dfe6f5"; for(const s of sStars){ sx.globalAlpha=0.5+0.4*s.t; sx.beginPath(); sx.arc(s.x*W,s.y*H,s.r,0,TAU); sx.fill(); } sx.globalAlpha=1;
+      drawSkyline(W,H,0.06);
+    }
     document.getElementById('sKind').textContent="Sun below horizon · not visible here";
     document.getElementById('sCov').textContent=`Sun altitude ${ev.sunAlt.toFixed(0)}° (night) · ${fmtDate(dayToDate(simDay))}`;
     return;
   }
   const b=Math.max(ev.kind==="Annular"?0.16:0.0, 1-Math.pow(ev.cover,3));   // sky brightness 1(day)..0(totality)
+  const photo=drawPhotoBg(W,H, Math.pow(ev.cover,1.6)*0.8, [6,9,24]);       // real city photo, dimmed as totality nears
 
-  const top=mixC([5,7,20],[44,104,196],b), hor=mixC([54,38,64],[140,182,226],b);
-  const grd=sx.createLinearGradient(0,0,0,H); grd.addColorStop(0,rgb(top)); grd.addColorStop(1,rgb(hor));
-  sx.fillStyle=grd; sx.fillRect(0,0,W,H);
-
-  if(b<0.3){ const a=(0.3-b)/0.3; sx.fillStyle="#dfe6f5";
-    for(const s of sStars){ sx.globalAlpha=a*(0.35+0.65*s.t); sx.beginPath(); sx.arc(s.x*W,s.y*H,s.r,0,TAU); sx.fill(); }
+  if(!photo){
+    const top=mixC([5,7,20],[44,104,196],b), hor=mixC([54,38,64],[140,182,226],b);
+    const grd=sx.createLinearGradient(0,0,0,H); grd.addColorStop(0,rgb(top)); grd.addColorStop(1,rgb(hor));
+    sx.fillStyle=grd; sx.fillRect(0,0,W,H);
+  }
+  if(b<0.3){ const a=(0.3-b)/0.3; sx.fillStyle="#dfe6f5";                    // stars emerge near totality (kept high, off the rooftops)
+    for(const s of sStars){ sx.globalAlpha=a*(0.35+0.65*s.t); sx.beginPath(); sx.arc(s.x*W,s.y*0.6*H,s.r,0,TAU); sx.fill(); }
     sx.globalAlpha=1; }
 
-  const sunPx=Math.min(W,H)*0.12, scale=sunPx/ev.Rs, cx=W*0.5, cy=H*0.4;
+  const sunPx=Math.min(W,H)*0.12, scale=sunPx/ev.Rs, cx=W*0.5, cy=(photo?0.3:0.4)*H;
   const mx=cx+ev.elong*scale, my=cy-ev.lat*scale, moonPx=ev.Rm*scale;
 
   const glowA=Math.max(0.12,1-ev.cover);
@@ -1165,7 +1186,7 @@ function drawSolarSurface(W,H){
     sx.fillStyle=dr; sx.beginPath(); sx.arc(bx,by,moonPx,0,TAU); sx.fill();
   }
 
-  drawSkyline(W,H,b);
+  if(!photo) drawSkyline(W,H,b);   // a real photo already includes the local horizon
   document.getElementById('sKind').textContent = ev.kind==="—"?"No eclipse":ev.kind+" solar eclipse";
   document.getElementById('sCov').textContent  = (ev.cover*100|0)+"% of Sun covered · "+fmtDate(dayToDate(simDay));
 }
@@ -1269,11 +1290,14 @@ function drawSkyline(W,H,b){
 function drawLunarSurface(W,H){
   const lv=lunarView(state), bFg=0.04+0.10*(1-lv.cover);
   const redt=Math.max(0,(lv.cover-0.6)/0.4);                       // sky reddens at totality
-  const top=mixC([3,5,16],[16,5,7],redt), hor=mixC([18,20,40],[36,13,15],redt);
-  const grd=sx.createLinearGradient(0,0,0,H); grd.addColorStop(0,rgb(top)); grd.addColorStop(1,rgb(hor));
-  sx.fillStyle=grd; sx.fillRect(0,0,W,H);
-  { const a=0.45+0.45*lv.cover; sx.fillStyle="#eef2ff";                 // stars (brighter once Moon dims)
-    for(const s of sStars){ sx.globalAlpha=a*(0.35+0.65*s.t); sx.beginPath(); sx.arc(s.x*W,s.y*H,s.r,0,TAU); sx.fill(); } sx.globalAlpha=1; }
+  const photo=drawPhotoBg(W,H, 0.7+0.06*redt, mixC([4,6,18],[26,8,8],redt));   // night city photo, faint red wash at totality
+  if(!photo){
+    const top=mixC([3,5,16],[16,5,7],redt), hor=mixC([18,20,40],[36,13,15],redt);
+    const grd=sx.createLinearGradient(0,0,0,H); grd.addColorStop(0,rgb(top)); grd.addColorStop(1,rgb(hor));
+    sx.fillStyle=grd; sx.fillRect(0,0,W,H);
+  }
+  { const a=(photo?0.3:0.45)+0.45*lv.cover; sx.fillStyle="#eef2ff";    // stars (brighter once Moon dims, kept high)
+    for(const s of sStars){ sx.globalAlpha=a*(0.35+0.65*s.t); sx.beginPath(); sx.arc(s.x*W,s.y*0.55*H,s.r,0,TAU); sx.fill(); } sx.globalAlpha=1; }
   const moonPx=Math.min(W,H)*0.15, scale=moonPx/lv.Rm, cx=W*0.5, cy=H*0.38;
   const shx=cx-lv.dlon*scale, shy=cy+lv.lat*scale, umbraPx=lv.umbra*scale, penPx=lv.pen*scale;
   const hg=sx.createRadialGradient(cx,cy,moonPx*0.8,cx,cy,moonPx*2.4);   // moon halo, fades as eclipsed
@@ -1293,7 +1317,7 @@ function drawLunarSurface(W,H){
   ug.addColorStop(0.92,"rgba(60,20,14,0.9)"); ug.addColorStop(1,"rgba(40,16,16,0)");
   sx.fillStyle=ug; sx.beginPath(); sx.arc(shx,shy,umbraPx,0,TAU); sx.fill();
   sx.restore();
-  drawSkyline(W,H,bFg);
+  if(!photo) drawSkyline(W,H,bFg);   // a real photo already includes the local horizon
   document.getElementById('sKind').textContent = lv.kind==="—"?"Full Moon · no eclipse":lv.kind+" lunar eclipse";
   document.getElementById('sCov').textContent  = (lv.cover*100|0)+"% of Moon in shadow · "+fmtDate(dayToDate(simDay));
 }
@@ -1451,7 +1475,9 @@ document.getElementById('exitView').onclick=closeViewing;
 const gCv=document.getElementById('globeCanvas');
 let gpin=null, globeActive=false, gInit=false, gRenderer, gScene, gCam, gControls, gEarth, gClouds, gLight, gPin, gSun, gComposer, gBloom;
 const fmtLat=v=>Math.abs(v).toFixed(1)+'°'+(v>=0?'N':'S'), fmtLon=v=>Math.abs(v).toFixed(1)+'°'+(v>=0?'E':'W');
-const g3=(lat,lon)=>{ const la=lat*D2R,lo=lon*D2R,cl=Math.cos(la); return [cl*Math.sin(lo),Math.sin(la),cl*Math.cos(lo)]; };
+// lat/lon → point on the unit sphere, matching three.js SphereGeometry UVs of an equirectangular
+// earth map (Greenwich at texture centre) so a pin lands on the REAL country it names.
+const g3=(lat,lon)=>{ const la=lat*D2R,lo=lon*D2R,cl=Math.cos(la); return [cl*Math.cos(lo),Math.sin(la),-cl*Math.sin(lo)]; };
 const CITIES=[                                            // recommended observing sites (themed surface views)
   {label:'🇪🇬 Cairo 開羅',     lat:30.0, lon:31.2,  theme:'egypt'},
   {label:'🇫🇷 Paris 巴黎',     lat:48.86,lon:2.35,  theme:'paris'},
@@ -1473,7 +1499,7 @@ function initGlobe(){
   gCam=new THREE.PerspectiveCamera(34,1,0.1,100); gCam.position.set(0.3,0.8,4.4);   // pulled back → whole globe fits
   gControls=new OrbitControls(gCam,gCv); gControls.enableDamping=true; gControls.dampingFactor=0.08;
   gControls.enablePan=false; gControls.minDistance=2.5; gControls.maxDistance=9; gControls.rotateSpeed=0.5;
-  gControls.autoRotate=true; gControls.autoRotateSpeed=0.45;
+  gControls.autoRotate=false;   // globe stays still (user: 地球不用動); it only orients when a site is picked
   gScene.add(new THREE.AmbientLight(0x556686,1.6));                              // bright + mostly even so the whole globe is clear
   gLight=new THREE.DirectionalLight(0xfff2e0,0.95); gScene.add(gLight); gScene.add(gLight.target);  // gentle shading for 3D form
   gEarth=new THREE.Mesh(new THREE.SphereGeometry(1,96,96), new THREE.MeshStandardMaterial({
@@ -1497,7 +1523,7 @@ function initGlobe(){
   gCv.addEventListener('pointerup',e=>{ if(!dn||Math.hypot(e.clientX-dn[0],e.clientY-dn[1])>5){ dn=null; return; } dn=null;
     const r=gCv.getBoundingClientRect(); pt.set(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
     ray.setFromCamera(pt,gCam); const h=ray.intersectObject(gEarth);
-    if(h.length){ const p=h[0].point.clone().normalize(); gpin={lat:Math.asin(Math.max(-1,Math.min(1,p.y)))*R2D, lon:Math.atan2(p.x,p.z)*R2D, theme:'generic'}; obsReadout(); } });
+    if(h.length){ const p=h[0].point.clone().normalize(); gpin={lat:Math.asin(Math.max(-1,Math.min(1,p.y)))*R2D, lon:Math.atan2(-p.z,p.x)*R2D, theme:'generic'}; obsReadout(); } });
   const cd=document.getElementById('globeCities');                  // recommended-city chips
   CITIES.forEach(c=>{ const btn=document.createElement('button'); btn.textContent=c.label; btn.onclick=()=>pickCity(c); cd.appendChild(btn); });
 }
@@ -1529,6 +1555,7 @@ window.__sim={ rev:THREE.REVISION,
     w:renderer.domElement.width,h:renderer.domElement.height,events:eclipses.length}),
   pause:()=>{playing=false;},
   step:()=>tick(performance.now()),
+  photo:()=>{ const im=cityPhoto(); return { theme:(observer&&observer.theme)||null, loaded:!!im, dims:im?[im.naturalWidth,im.naturalHeight]:null }; },
   ff:days=>advance(days),                       // integrate forward N days (verification)
   phys:()=>{ const d=[]; for(let i=0;i<8;i++){const k=i+1;
       d.push({name:PLANETS[i].name, rAU:+Math.hypot(state.x[k]-state.x[0],state.y[k]-state.y[0],state.z[k]-state.z[0]).toFixed(4)});}
