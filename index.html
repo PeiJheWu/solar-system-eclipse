@@ -1425,34 +1425,37 @@ function glowMarker(color,scale){ const s=new THREE.Sprite(new THREE.SpriteMater
   transparent:true,blending:THREE.AdditiveBlending,depthWrite:false})); s.scale.set(scale,scale,1); return s; }
 function initGlobe(){
   gInit=true;
-  gRenderer=new THREE.WebGLRenderer({canvas:gCv,antialias:true,alpha:true});
-  gRenderer.setClearColor(0x000000,0); gRenderer.toneMapping=THREE.ACESFilmicToneMapping; gRenderer.outputColorSpace=THREE.SRGBColorSpace;
+  gRenderer=new THREE.WebGLRenderer({canvas:gCv,antialias:true});
+  gRenderer.setClearColor(0x05070f,1); gRenderer.toneMapping=THREE.ACESFilmicToneMapping; gRenderer.toneMappingExposure=0.78; gRenderer.outputColorSpace=THREE.SRGBColorSpace;
   gScene=new THREE.Scene();
   gCam=new THREE.PerspectiveCamera(32,1,0.1,100); gCam.position.set(0.2,0.5,3.0);
   gControls=new OrbitControls(gCam,gCv); gControls.enableDamping=true; gControls.dampingFactor=0.08;
   gControls.enablePan=false; gControls.minDistance=1.5; gControls.maxDistance=6; gControls.rotateSpeed=0.5;
   gControls.autoRotate=true; gControls.autoRotateSpeed=0.45;
-  gScene.add(new THREE.AmbientLight(0x223a55,0.7));
-  gLight=new THREE.DirectionalLight(0xfff4e6,3.0); gScene.add(gLight); gScene.add(gLight.target);
+  gScene.add(new THREE.AmbientLight(0x33415e,0.78));                              // mostly even, soft day/night
+  gLight=new THREE.DirectionalLight(0xfff2e0,1.15); gScene.add(gLight); gScene.add(gLight.target);
   gEarth=new THREE.Mesh(new THREE.SphereGeometry(1,96,96), new THREE.MeshStandardMaterial({
     map:colorTex("earthmap1k.jpg"), bumpMap:dataTex("earthbump1k.jpg"), bumpScale:0.012,
-    metalnessMap:dataTex("earthspec1k.jpg"), metalness:0.55, roughness:0.62 }));
+    roughness:0.95, metalness:0.0 }));                                            // matte — no harsh ocean glint
   gScene.add(gEarth);
   gClouds=new THREE.Mesh(new THREE.SphereGeometry(1.012,96,96), new THREE.MeshStandardMaterial({
-    map:colorTex("earthcloudmap.jpg"), alphaMap:colorTex("earthcloudmap.jpg"), transparent:true, depthWrite:false, roughness:1 }));
+    map:colorTex("earthcloudmap.jpg"), alphaMap:colorTex("earthcloudmap.jpg"), transparent:true, opacity:0.85, depthWrite:false, roughness:1 }));
   gScene.add(gClouds);
-  gScene.add(new THREE.Mesh(new THREE.SphereGeometry(1.17,64,64), atmosphereMat(0x6cb4ff)));   // Fresnel air-glow
+  const atmoMat=new THREE.ShaderMaterial({ transparent:true, blending:THREE.AdditiveBlending, side:THREE.BackSide, depthWrite:false,
+    uniforms:{uColor:{value:new THREE.Color(0x3f78c0)}},
+    vertexShader:`varying vec3 vN;varying vec3 vV;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);vN=normalize(normalMatrix*normal);vV=normalize(-mv.xyz);gl_Position=projectionMatrix*mv;}`,
+    fragmentShader:`uniform vec3 uColor;varying vec3 vN;varying vec3 vV;void main(){float f=pow(1.-clamp(dot(vN,vV),0.,1.),4.0);gl_FragColor=vec4(uColor,f*0.45);}`});
+  gScene.add(new THREE.Mesh(new THREE.SphereGeometry(1.13,64,64), atmoMat));      // subtle, tight rim glow
   // holographic graticule
   const pts=[];
   for(let lo=-180;lo<180;lo+=30) for(let la=-90;la<90;la+=3){ pts.push(g3(la,lo),g3(la+3,lo)); }
   for(let la=-60;la<=60;la+=30) for(let lo=-180;lo<180;lo+=3){ pts.push(g3(la,lo),g3(la,lo+3)); }
   const arr=new Float32Array(pts.length*3); pts.forEach((p,i)=>{arr[3*i]=p[0]*1.005;arr[3*i+1]=p[1]*1.005;arr[3*i+2]=p[2]*1.005;});
   const gg=new THREE.BufferGeometry(); gg.setAttribute('position',new THREE.BufferAttribute(arr,3));
-  gScene.add(new THREE.LineSegments(gg,new THREE.LineBasicMaterial({color:0x5fe3ff,transparent:true,opacity:0.18,blending:THREE.AdditiveBlending,depthWrite:false})));
-  gSun=glowMarker(0xffd27a,0.5); gScene.add(gSun);
-  gPin=glowMarker(0xff6a4d,0.42); gPin.visible=false; gScene.add(gPin);
+  gScene.add(new THREE.LineSegments(gg,new THREE.LineBasicMaterial({color:0x5fe3ff,transparent:true,opacity:0.14,blending:THREE.AdditiveBlending,depthWrite:false})));
+  gPin=glowMarker(0xff5a3c,0.4); gPin.visible=false; gScene.add(gPin);
   gComposer=new EffectComposer(gRenderer); gComposer.addPass(new RenderPass(gScene,gCam));
-  gBloom=new UnrealBloomPass(new THREE.Vector2(1,1),0.6,0.5,0.2); gComposer.addPass(gBloom); gComposer.addPass(new OutputPass());
+  gBloom=new UnrealBloomPass(new THREE.Vector2(1,1),0.12,0.4,0.85); gComposer.addPass(gBloom); gComposer.addPass(new OutputPass());
   // pick (raycast), distinguished from a drag
   const ray=new THREE.Raycaster(), pt=new THREE.Vector2(); let dn=null;
   gCv.addEventListener('pointerdown',e=>{ dn=[e.clientX,e.clientY]; });
@@ -1467,7 +1470,6 @@ function gResize(){ if(!gInit) return; const w=gCv.clientWidth||480,h=gCv.client
 function renderGlobe(){
   const ss=subSolar(state,simDay), L=g3(ss.lat,ss.lon);
   gLight.position.set(L[0]*10,L[1]*10,L[2]*10); gLight.target.position.set(0,0,0);
-  gSun.position.set(L[0]*1.5,L[1]*1.5,L[2]*1.5);
   if(gpin){ const P=g3(gpin.lat,gpin.lon); gPin.visible=true; gPin.position.set(P[0]*1.05,P[1]*1.05,P[2]*1.05); } else gPin.visible=false;
   gClouds.rotation.y+=0.0004; gControls.update(); gComposer.render();
 }
