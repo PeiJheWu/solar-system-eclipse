@@ -93,6 +93,7 @@
     width:40px;height:40px;border-radius:10px;cursor:pointer;font-size:15px;transition:.15s;
     display:flex;align-items:center;justify-content:center}
   #controls button:hover{background:rgba(95,227,255,.18);border-color:var(--cyan);box-shadow:0 0 14px rgba(95,227,255,.25)}
+  #controls button.on{background:rgba(255,178,77,.22);border-color:var(--amber);color:var(--amber);box-shadow:0 0 14px rgba(255,178,77,.3)}
   #controls .speed{display:flex;flex-direction:column;gap:6px;min-width:172px}
   #controls .speed label{font-size:10.5px;color:var(--muted);font-family:var(--mono);display:flex;justify-content:space-between}
   #controls .speed b{color:var(--cyan)}
@@ -209,6 +210,70 @@
   a.nart .nsrc{color:var(--amber)}
   .nstate{padding:26px 18px;text-align:center;color:var(--muted);font-size:12.5px}
   .nnote{padding:12px 16px 6px;font-size:9.5px;color:var(--muted);line-height:1.5;opacity:.8}
+  #newsTabs{display:flex;gap:6px;padding:10px 14px 0}
+  #newsTabs button{flex:1;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);
+    padding:7px 4px 9px;cursor:pointer;font-size:12px;font-family:var(--mono);letter-spacing:.5px;transition:.15s}
+  #newsTabs button:hover{color:var(--text)}
+  #newsTabs button.on{color:var(--cyan);border-bottom-color:var(--cyan)}
+  /* agency cards in the list */
+  .agcard{display:flex;align-items:center;gap:13px;padding:11px 16px;border-top:1px solid rgba(255,255,255,.06);cursor:pointer;transition:.15s}
+  .agcard:hover{background:rgba(95,227,255,.06)}
+  .agcard .agc-em{width:42px;height:42px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:var(--mono);font-size:11px;font-weight:700;color:#04121a;letter-spacing:.5px}
+  .agcard .agc-n{font-size:13px;color:var(--text)}
+  .agcard .agc-s{font-size:10.5px;color:var(--muted);font-family:var(--mono);margin-top:2px}
+  .agcard .agc-go{margin-left:auto;color:var(--muted);font-size:16px}
+  .agcard:hover .agc-go{color:var(--cyan)}
+
+  /* ---- cinematic agency dossier ---- */
+  #agency{position:fixed;inset:0;z-index:18;--accent:#5fe3ff;display:flex;align-items:center;justify-content:center;padding:24px;
+    opacity:0;pointer-events:none;transition:opacity .4s;
+    background:radial-gradient(125% 100% at 50% 8%, rgba(95,227,255,.13), #060912 55%, #02040a 100%)}
+  #agency.show{opacity:1;pointer-events:auto}
+  #agency .agScan{position:absolute;inset:0;pointer-events:none;opacity:.5;
+    background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(255,255,255,.018) 2px 3px)}
+  #agClose{position:absolute;top:18px;right:22px;z-index:20;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer}
+  #agClose:hover{color:var(--text)}
+  .agCard{position:relative;width:min(94vw,720px);max-height:80vh;overflow-y:auto;scrollbar-width:thin;
+    background:linear-gradient(180deg,rgba(12,18,32,.86),rgba(7,11,20,.92));border:1px solid var(--accent);border-radius:18px;
+    padding:30px 34px 30px;box-shadow:0 0 60px rgba(0,0,0,.6), inset 0 0 60px rgba(0,0,0,.35);
+    backdrop-filter:blur(10px)}
+  .agCard::before,.agCard::after{content:"";position:absolute;width:22px;height:22px;border:2px solid var(--accent);opacity:.8}
+  .agCard::before{top:11px;left:11px;border-right:none;border-bottom:none;border-radius:6px 0 0 0}
+  .agCard::after{bottom:11px;right:11px;border-left:none;border-top:none;border-radius:0 0 6px 0}
+  .agHead{display:flex;align-items:center;gap:20px;margin-bottom:20px}
+  .agEmblem{width:88px;height:88px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    border:2px solid var(--accent);position:relative;
+    background:radial-gradient(circle at 50% 38%, color-mix(in srgb,var(--accent) 30%, transparent), transparent 70%);
+    box-shadow:0 0 26px color-mix(in srgb,var(--accent) 45%, transparent), inset 0 0 18px color-mix(in srgb,var(--accent) 25%, transparent)}
+  .agEmblem::after{content:"";position:absolute;inset:7px;border:1px solid color-mix(in srgb,var(--accent) 55%, transparent);border-radius:50%}
+  .agEmblem span{font-family:var(--mono);font-weight:700;font-size:20px;letter-spacing:1px;color:#fff;text-shadow:0 0 10px var(--accent)}
+  .agEyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+  .agTitleWrap h2{font-size:31px;font-weight:750;letter-spacing:-.4px;line-height:1.05}
+  .agMeta{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:7px;line-height:1.6}
+  .agMeta b{color:#cdd6ec;font-weight:500}
+  .agIntro{font-size:14px;line-height:1.72;color:#cdd6ec;margin:6px 0 4px;padding-top:18px;border-top:1px solid rgba(255,255,255,.09)}
+  #agency h3{font-size:11px;font-family:var(--mono);color:var(--muted);letter-spacing:2px;text-transform:uppercase;
+    margin:24px 0 13px;display:flex;align-items:center;gap:9px}
+  #agency h3::before{content:"";width:15px;height:2px;background:var(--accent);border-radius:2px}
+  .agTimeline{display:flex;flex-direction:column;gap:0}
+  .agTl{display:grid;grid-template-columns:58px 1fr;gap:14px;padding:0 0 14px 0;position:relative}
+  .agTl::before{content:"";position:absolute;left:64px;top:6px;bottom:-2px;width:1px;background:rgba(255,255,255,.12)}
+  .agTl:last-child::before{display:none}
+  .agTl .yr{font-family:var(--mono);font-size:12px;color:var(--accent);text-align:right;font-weight:600}
+  .agTl .ev{font-size:13px;line-height:1.5;color:#cdd6ec;position:relative;padding-left:16px}
+  .agTl .ev::before{content:"";position:absolute;left:-1px;top:5px;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .agTags{display:flex;flex-wrap:wrap;gap:7px}
+  .agTags span{font-family:var(--mono);font-size:11px;color:#cdd6ec;padding:5px 11px;border-radius:999px;
+    border:1px solid color-mix(in srgb,var(--accent) 40%, transparent);background:color-mix(in srgb,var(--accent) 9%, transparent)}
+  .agLink{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:12px;color:var(--accent);text-decoration:none;
+    border:1px solid var(--accent);border-radius:9px;padding:8px 15px;transition:.15s}
+  .agLink:hover{background:color-mix(in srgb,var(--accent) 18%, transparent)}
+  .agNote{margin-top:16px;font-size:10px;color:var(--muted);opacity:.7;line-height:1.5}
+  .agNav{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:20}
+  .agNav button{background:rgba(10,14,26,.6);border:1px solid rgba(255,255,255,.14);color:var(--text);border-radius:9px;
+    padding:9px 16px;cursor:pointer;font-family:var(--mono);font-size:12px;backdrop-filter:blur(10px);transition:.15s}
+  .agNav button:hover{border-color:var(--accent);color:var(--accent)}
 
   /* ---- globe location picker ---- */
   #globe{position:fixed;inset:0;z-index:10;opacity:0;pointer-events:none;transition:opacity .35s;
@@ -307,6 +372,14 @@
     #planetFacts{flex:1 1 auto;max-width:none;width:100%;height:auto;border-left:none;border-top:1px solid rgba(255,255,255,.08);padding:20px 18px 88px}
     #planetFacts h2{font-size:31px}
     #planetNav{left:50%;bottom:14px}
+    #agency{padding:12px}
+    .agCard{padding:24px 20px;max-height:80vh}
+    .agHead{gap:14px}
+    .agEmblem{width:64px;height:64px}
+    .agEmblem span{font-size:15px}
+    .agTitleWrap h2{font-size:23px}
+    .agTl{grid-template-columns:46px 1fr;gap:10px}
+    .agTl::before{left:51px}
     #globe{padding:46px 10px 96px}
     .ghead{font-size:13px;padding:0 40px;line-height:1.3}
     #globeHint{font-size:9.5px;top:42px;padding:0 12px}
@@ -366,9 +439,10 @@
 </div>
 
 <div class="panel" id="controls">
+  <button id="revBtn" title="Reverse the flow of time">⏪</button>
   <button id="playBtn" title="Play / Pause (space)">⏸</button>
   <div class="speed">
-    <label>Time flow <b id="spd">8</b> days/s</label>
+    <label><span id="tdir">▶ forward</span> · <b id="spd">8</b> days/s</label>
     <input id="speed" type="range" min="0.5" max="80" step="0.5" value="8" />
   </div>
   <button id="jump" title="Jump to next eclipse">⏭</button>
@@ -404,9 +478,33 @@
 </div>
 
 <div id="news">
-  <div class="vhead">📡 Mission Feed · Latest from space<button id="exitNews">✕</button></div>
+  <div class="vhead">📡 Mission Feed<button id="exitNews">✕</button></div>
+  <div id="newsTabs"><button data-tab="feed" class="on">📡 Live feed</button><button data-tab="agencies">🏛 Agencies</button></div>
   <div id="newsFilters"></div>
   <div id="newsList"></div>
+</div>
+
+<div id="agency">
+  <div class="agScan"></div>
+  <button id="agClose" title="Close">✕</button>
+  <div class="agCard">
+    <div class="agHead">
+      <div class="agEmblem"><span id="agAcro"></span></div>
+      <div class="agTitleWrap">
+        <div class="agEyebrow" id="agType"></div>
+        <h2 id="agName"></h2>
+        <div class="agMeta" id="agMeta"></div>
+      </div>
+    </div>
+    <p class="agIntro" id="agIntro"></p>
+    <h3>Milestones</h3>
+    <div class="agTimeline" id="agMilestones"></div>
+    <h3>Active programs</h3>
+    <div class="agTags" id="agPrograms"></div>
+    <a class="agLink" id="agSite" target="_blank" rel="noopener noreferrer">Official site ↗</a>
+    <div class="agNote">Profiles compiled from public sources, current to early 2026.</div>
+  </div>
+  <div class="agNav"><button id="agPrev" title="Previous">‹ Prev</button><button id="agNext" title="Next">Next ›</button></div>
 </div>
 
 <div id="globe">
@@ -693,8 +791,8 @@ function nextAlignment(){               // next tight grouping of the 5 bright p
 }
 
 function cloneState(S){ const C={}; for(const k of ['x','y','z','vx','vy','vz','m']) C[k]=S[k].slice(); return C; }
-function forecastSim(S0,count){               // PREDICT eclipses (solar + lunar) by integrating forward
-  const S=cloneState(S0), h=0.06; let t=0, out=[], guard=0;
+function forecastSim(S0,count,dir){           // PREDICT eclipses (solar + lunar) by integrating forward (dir −1 = search the past)
+  const S=cloneState(S0), h=0.06*(dir||1); let t=0, out=[], guard=0;
   let pe=geom(S).elong, pd=fold180(pe-180);
   while(out.length<count && guard++<90000){
     verlet(S,h); t+=h; const g=geom(S), dl=fold180(g.elong-180);
@@ -994,7 +1092,7 @@ function drawDiagram(e,b){
 let eclipses=[], lastForecast=-1e9;
 function renderReadout(e,b){
   document.getElementById('date').textContent  = fmtDate(dayToDate(simDay));
-  document.getElementById('rate').textContent  = (playing?speed:0)+" d/s";
+  document.getElementById('rate').textContent  = (playing?(timeDir<0?"−":"")+speed:0)+" d/s";
   document.getElementById('phase').textContent = phaseName(e);
   document.getElementById('elong').textContent = e.toFixed(1)+"°";
   document.getElementById('lat').textContent   = b.toFixed(2)+"°";
@@ -1019,7 +1117,7 @@ function renderForecast(){
 /* ============================================================
    ANIMATION LOOP
    ============================================================ */
-let simDay=0, playing=true, speed=8, last=performance.now();
+let simDay=0, playing=true, speed=8, timeDir=1, last=performance.now();   // timeDir −1 = run time backwards
 let state=makeState();                         // the live gravitational system
 const BASE_DT=0.0125, MAXSTEPS=320;            // integrator substep (days) + per-frame cap
 const _v=new THREE.Vector3();
@@ -1076,7 +1174,7 @@ function tick(now){
     let f = surfaceActive ? 0.0015 : 1;        // surface view runs in slow motion so the eclipse is watchable
     if(surfaceActive){ const cov = Math.abs(geom(state).elong)>90 ? lunarView(state).cover : eclipseView(state).cover;
       if(cov>0.9) f*=0.2; }                     // crawl through totality
-    advance(dt*speed*f);                        // ← orbits come from gravity, not a clock formula
+    advance(dt*speed*f*timeDir);                // ← orbits come from gravity, not a clock formula (timeDir flips the arrow of time)
   }
 
   if(Math.abs(simDay-lastForecast)>18){ eclipses=forecastSim(state,5); lastForecast=simDay; renderForecast(); }
@@ -1140,9 +1238,18 @@ const playBtn=document.getElementById('playBtn');
 playBtn.onclick=()=>{ playing=!playing; playBtn.textContent=playing?"⏸":"▶"; };
 const speedEl=document.getElementById('speed');
 speedEl.oninput=()=>{ speed=parseFloat(speedEl.value); document.getElementById('spd').textContent=speed; };
+const revBtn=document.getElementById('revBtn');
+function updateDir(){ const back=timeDir<0;
+  revBtn.classList.toggle('on',back); revBtn.textContent=back?"⏩":"⏪";
+  revBtn.title=back?"Time is running backwards — click to go forward":"Reverse the flow of time";
+  document.getElementById('jump').textContent=back?"⏮":"⏭";
+  document.getElementById('jump').title=back?"Jump to previous eclipse":"Jump to next eclipse";
+  const td=document.getElementById('tdir'); td.textContent=back?"◀ reverse":"▶ forward"; td.style.color=back?"var(--amber)":"var(--cyan)";
+}
+revBtn.onclick=()=>{ timeDir=-timeDir; if(!playing){ playing=true; playBtn.textContent="⏸"; } updateDir(); };
 document.getElementById('jump').onclick=()=>{
   if(surfaceActive){ const n=nextGoodEclipse(); if(n) gotoDay(n.day-0.12); return; }
-  const n=forecastSim(state,1)[0]; if(n) gotoDay(n.day-1);
+  const n=forecastSim(state,1,timeDir)[0]; if(n) gotoDay(n.day-timeDir);   // next eclipse forward, or previous when reversed
 };
 addEventListener('keydown',ev=>{
   if(ev.code==="Space"){ ev.preventDefault(); playBtn.click(); }
@@ -1645,10 +1752,82 @@ async function loadNews(){
     list.innerHTML=html;
   }catch(e){ list.innerHTML='<div class="nstate">Couldn’t reach the feeds right now — please try again in a moment.</div>'; }
 }
-function openNews(){ newsActive=true; document.getElementById('news').classList.add('show'); renderNewsFilters(); loadNews(); }
+function openNews(){ newsActive=true; document.getElementById('news').classList.add('show');
+  document.querySelectorAll('#newsTabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab==='feed'));   // default to the live feed
+  document.getElementById('newsFilters').style.display=''; renderNewsFilters(); loadNews(); }
 function closeNews(){ newsActive=false; document.getElementById('news').classList.remove('show'); }
 document.getElementById('newsBtn').onclick=openNews;
 document.getElementById('exitNews').onclick=closeNews;
+
+/* ---- space agencies & companies — cinematic profile dossiers ---- */
+const AGENCIES=[
+  {acro:"NASA",name:"NASA",flag:"🇺🇸",country:"United States",accent:"#3b82f6",founded:"1958",hq:"Washington, D.C.",type:"Government",cls:"National space agency · civil",
+    intro:"The United States' civil space agency, responsible for the nation's civilian spaceflight, aeronautics and space science. NASA has led human exploration from Mercury and Apollo to the International Space Station and the Artemis return to the Moon.",
+    milestones:[["1958","NASA established by the National Aeronautics and Space Act"],["1969","Apollo 11 — first crewed Moon landing"],["1977","Voyager 1 & 2 begin the grand tour of the outer planets"],["1990","Hubble Space Telescope deployed"],["2012","Curiosity lands in Gale Crater, Mars"],["2021","James Webb Space Telescope launched"],["2022","Artemis I flies an uncrewed Orion around the Moon"]],
+    programs:["Artemis","Commercial Crew","James Webb","Mars Sample Return","Europa Clipper","Earth science fleet"], site:"https://www.nasa.gov"},
+  {acro:"ESA",name:"European Space Agency",flag:"🇪🇺",country:"Europe (22 states)",accent:"#6f8cf0",founded:"1975",hq:"Paris, France",type:"Intergovernmental",cls:"Intergovernmental space agency",
+    intro:"Europe's gateway to space — a 22-member intergovernmental organisation coordinating the continent's space science, exploration and independent launch capability, from the Ariane rockets to flagship deep-space science missions.",
+    milestones:[["1975","ESA founded from ESRO and ELDO"],["1979","First Ariane launch from Kourou"],["2004","Rosetta launched toward comet 67P"],["2014","Philae makes the first soft landing on a comet"],["2021","Ariane 5 launches the JWST (with NASA & CSA)"],["2023","JUICE departs for Jupiter's icy moons"]],
+    programs:["Ariane 6","JUICE","Euclid","Gaia","ExoMars","Copernicus","Vega-C"], site:"https://www.esa.int"},
+  {acro:"SPX",name:"SpaceX",flag:"🇺🇸",country:"United States",accent:"#aab6cc",founded:"2002",hq:"Hawthorne / Starbase",type:"Private",cls:"Private aerospace company",
+    intro:"A private American company that pioneered orbital-class rocket reuse. SpaceX flies the workhorse Falcon 9, operates the Starlink internet constellation, carries NASA astronauts in Dragon, and is developing the fully-reusable Starship.",
+    milestones:[["2002","Founded by Elon Musk"],["2008","Falcon 1 — first privately-developed liquid rocket to orbit"],["2012","Dragon — first commercial craft to dock with the ISS"],["2015","First orbital booster landing"],["2020","Crew Dragon Demo-2 — first private crewed orbital flight"],["2023–25","Starship orbital flight-test campaign"]],
+    programs:["Falcon 9 / Heavy","Crew & Cargo Dragon","Starlink","Starship / Super Heavy"], site:"https://www.spacex.com"},
+  {acro:"РК",name:"Roscosmos",flag:"🇷🇺",country:"Russia",accent:"#e0654a",founded:"1992",hq:"Moscow, Russia",type:"Government",cls:"State space corporation",
+    intro:"Russia's state space corporation, heir to the Soviet programme that achieved many of spaceflight's firsts. It operates the long-serving Soyuz crew vehicle and Progress cargo craft and is a core partner on the International Space Station.",
+    milestones:[["1957","Sputnik 1 — first artificial satellite"],["1961","Yuri Gagarin — first human in space"],["1963","Valentina Tereshkova — first woman in space"],["1971","Salyut 1 — first space station"],["1986","Mir station core module launched"],["Today","Soyuz & Progress sustain ISS crew rotation"]],
+    programs:["Soyuz / Progress","ISS Russian segment","Angara","Luna programme"], site:"https://www.roscosmos.ru"},
+  {acro:"CNSA",name:"China National Space Admin.",flag:"🇨🇳",country:"China",accent:"#e8c879",founded:"1993",hq:"Beijing, China",type:"Government",cls:"National space agency",
+    intro:"The agency directing China's fast-expanding space programme — crewed flight aboard Shenzhou, the Tiangong space station, and an acclaimed series of robotic Moon and Mars missions.",
+    milestones:[["2003","Shenzhou 5 — first Chinese crewed spaceflight"],["2019","Chang'e 4 — first landing on the lunar far side"],["2020","Chang'e 5 returns lunar samples"],["2021","Tianwen-1 / Zhurong rover reaches Mars; Tiangong core launched"],["2024","Chang'e 6 — first far-side sample return"]],
+    programs:["Tiangong station","Chang'e / ILRS","Tianwen","Long March","Crewed lunar landing"], site:"https://www.cnsa.gov.cn/english"},
+  {acro:"JAXA",name:"JAXA",flag:"🇯🇵",country:"Japan",accent:"#57c0d8",founded:"2003",hq:"Tokyo, Japan",type:"Government",cls:"National space agency",
+    intro:"The Japan Aerospace Exploration Agency conducts the nation's space science, satellites and exploration — celebrated for audacious asteroid sample-return missions and its Kibō module on the ISS.",
+    milestones:[["2003","JAXA formed by merging ISAS, NAL and NASDA"],["2010","Hayabusa returns the first asteroid samples (Itokawa)"],["2020","Hayabusa2 delivers samples of asteroid Ryugu"],["2024","SLIM achieves a precision soft landing on the Moon"]],
+    programs:["H3 rocket","MMX (Mars moons)","Hayabusa legacy","Kibō / ISS","LUPEX (with ISRO)"], site:"https://global.jaxa.jp"},
+  {acro:"ISRO",name:"ISRO",flag:"🇮🇳",country:"India",accent:"#f0913c",founded:"1969",hq:"Bengaluru, India",type:"Government",cls:"National space agency",
+    intro:"The Indian Space Research Organisation runs India's space programme with a global reputation for cost-effective missions — from the dependable PSLV to lunar and Mars probes and a developing human-spaceflight effort.",
+    milestones:[["1975","Aryabhata — India's first satellite"],["2008","Chandrayaan-1 finds water on the Moon"],["2014","Mangalyaan reaches Mars on the first attempt"],["2023","Chandrayaan-3 lands near the lunar south pole"],["2023","Aditya-L1 solar observatory launched"]],
+    programs:["Gaganyaan (crewed)","Chandrayaan-4","PSLV / GSLV / LVM3","NISAR (with NASA)"], site:"https://www.isro.gov.in"},
+  {acro:"BO",name:"Blue Origin",flag:"🇺🇸",country:"United States",accent:"#5fd0a0",founded:"2000",hq:"Kent, Washington",type:"Private",cls:"Private aerospace company",
+    intro:"A private American company founded by Jeff Bezos, pursuing reusable rockets and low-cost access to space. It flies the suborbital New Shepard and is fielding the heavy-lift orbital New Glenn.",
+    milestones:[["2000","Founded by Jeff Bezos"],["2015","New Shepard — first booster soft-landing and reuse"],["2021","First crewed New Shepard suborbital flight"],["2025","New Glenn reaches orbit on its debut"]],
+    programs:["New Shepard","New Glenn","BE-4 engines","Blue Moon lander","Orbital Reef"], site:"https://www.blueorigin.com"},
+  {acro:"RL",name:"Rocket Lab",flag:"🇳🇿",country:"USA / New Zealand",accent:"#b26fe0",founded:"2006",hq:"Long Beach, California",type:"Private",cls:"Private launch & space systems",
+    intro:"A small-launch pioneer flying the Electron rocket from New Zealand and the US, with a growing space-systems and spacecraft business and the reusable medium-lift Neutron in development.",
+    milestones:[["2006","Founded by Peter Beck"],["2018","Electron — first dedicated small-launcher to reach orbit commercially"],["2023","Launches NASA's CAPSTONE toward lunar orbit"],["Now","Developing the reusable Neutron rocket"]],
+    programs:["Electron","Neutron (in dev)","Photon bus","Space systems"], site:"https://www.rocketlabusa.com"},
+];
+let agIdx=0;
+function renderAgencyGrid(){ const list=document.getElementById('newsList');
+  list.innerHTML='<div class="nsub">🏛 Agencies &amp; companies</div>'+AGENCIES.map((a,i)=>
+    `<div class="agcard" data-i="${i}"><div class="agc-em" style="background:${a.accent}">${escH(a.acro)}</div>`+
+    `<div><div class="agc-n">${escH(a.flag)} ${escH(a.name)}</div><div class="agc-s">${escH(a.type)} · est. ${escH(a.founded)} · ${escH(a.hq)}</div></div>`+
+    `<div class="agc-go">›</div></div>`).join('')+
+    '<div class="nnote">Tap an organisation for its profile.</div>';
+  list.querySelectorAll('.agcard').forEach(c=>c.onclick=()=>openAgency(+c.dataset.i));
+}
+function openAgency(i){ agIdx=(i+AGENCIES.length)%AGENCIES.length; const a=AGENCIES[agIdx];
+  const ag=document.getElementById('agency'); ag.style.setProperty('--accent',a.accent);
+  document.getElementById('agAcro').textContent=a.acro;
+  document.getElementById('agType').textContent=a.cls;
+  document.getElementById('agName').textContent=a.name;
+  document.getElementById('agMeta').innerHTML=`${escH(a.flag)} <b>${escH(a.country)}</b> · Founded <b>${escH(a.founded)}</b> · HQ <b>${escH(a.hq)}</b>`;
+  document.getElementById('agIntro').textContent=a.intro;
+  document.getElementById('agMilestones').innerHTML=a.milestones.map(m=>`<div class="agTl"><div class="yr">${escH(m[0])}</div><div class="ev">${escH(m[1])}</div></div>`).join('');
+  document.getElementById('agPrograms').innerHTML=a.programs.map(p=>`<span>${escH(p)}</span>`).join('');
+  document.getElementById('agSite').href=/^https?:\/\//.test(a.site)?a.site:'#';
+  ag.classList.add('show'); const card=ag.querySelector('.agCard'); if(card) card.scrollTop=0;
+}
+function closeAgency(){ document.getElementById('agency').classList.remove('show'); }
+document.getElementById('agClose').onclick=closeAgency;
+document.getElementById('agPrev').onclick=()=>openAgency(agIdx-1);
+document.getElementById('agNext').onclick=()=>openAgency(agIdx+1);
+document.querySelectorAll('#newsTabs button').forEach(b=>b.onclick=()=>{
+  const tab=b.dataset.tab; document.querySelectorAll('#newsTabs button').forEach(x=>x.classList.toggle('on',x===b));
+  if(tab==='agencies'){ document.getElementById('newsFilters').style.display='none'; renderAgencyGrid(); }
+  else { document.getElementById('newsFilters').style.display=''; renderNewsFilters(); loadNews(); }
+});
 
 /* ============================================================
    GLOBE location picker — choose the observing site; all eclipse

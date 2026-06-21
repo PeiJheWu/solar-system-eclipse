@@ -66,11 +66,16 @@ Single self-contained `index.html` — no build step.
   sidereal-rotation periods, obliquity, eccentricity, temperature), atmospheric composition, a set of
   notable features, and a detailed exploration history/outlook (curated to early 2026). Step through
   the planets with ‹ / › . (Earth's click still opens the observing-site globe.)
-- **📡 Live Mission Feed.** A 📡 panel pulls the **latest real space news** (aggregated across NASA,
-  SpaceX, ESA and more via the Spaceflight News API) and the **next upcoming launches** with live
-  countdowns (The Space Devs · Launch Library 2). Filter the news by NASA / SpaceX / ESA / China /
-  Moon / Mars; headlines link out to their original source. (Live feeds, fetched client-side and
-  cached briefly; they degrade gracefully if a service is unavailable.)
+- **📡 Live Mission Feed + agency dossiers.** A 📡 panel with two tabs. **Live feed** pulls the
+  **latest real space news** (aggregated across NASA, SpaceX, ESA and more via the Spaceflight News
+  API) and the **next upcoming launches** with live countdowns (The Space Devs · Launch Library 2),
+  filterable by NASA / SpaceX / ESA / China / Moon / Mars. **Agencies** opens a cinematic, accent-themed
+  **profile dossier** for each major organisation — NASA, ESA, SpaceX, Roscosmos, CNSA, JAXA, ISRO,
+  Blue Origin, Rocket Lab — with a glowing emblem, founding/HQ/type, a milestones timeline and current
+  programs. (Live feeds fetched client-side and cached briefly; they degrade gracefully if unavailable.)
+- **⏪ Reverse time.** Run the gravitational clock **backwards** as well as forwards — the symplectic
+  integrator is time-reversible (energy holds to ~10⁻¹⁶ either way), so you can rewind orbits and the
+  eclipse cycle. The ⏭ jump even finds the *previous* eclipse when time is reversed.
 - **Responsive.** Adapts framing and HUD for desktop and mobile.
 
 ## 🎮 Controls
@@ -80,9 +85,12 @@ Single self-contained `index.html` — no build step.
 | Orbit camera | drag |
 | Zoom | scroll / pinch |
 | Play / pause | `space` or ⏸ |
+| Reverse time direction | ⏪ |
 | Step ±1 day | `←` / `→` |
-| Jump to next eclipse | ⏭ |
+| Jump to next / previous eclipse | ⏭ (follows time direction) |
+| Planet fact sheet | click any planet |
 | Enter Earth (surface view) | 🌍 button, or click the Earth |
+| Live space news & agency profiles | 📡 |
 | Time speed | slider |
 
 ## 🛠 Tech
