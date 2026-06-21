@@ -225,62 +225,86 @@
   .agcard .agc-go{margin-left:auto;color:var(--muted);font-size:16px}
   .agcard:hover .agc-go{color:var(--cyan)}
 
-  /* ---- cinematic agency dossier ---- */
+  /* ---- holographic agency dossier (futuristic mission console) ---- */
   #agency{position:fixed;inset:0;z-index:18;--accent:#5fe3ff;display:flex;align-items:center;justify-content:center;padding:24px;
-    opacity:0;pointer-events:none;transition:opacity .4s;
-    background:radial-gradient(125% 100% at 50% 8%, rgba(95,227,255,.13), #060912 55%, #02040a 100%)}
+    opacity:0;pointer-events:none;transition:opacity .45s;
+    background:radial-gradient(130% 100% at 50% 0%, color-mix(in srgb,var(--accent) 15%, transparent), #060912 52%, #010309 100%)}
   #agency.show{opacity:1;pointer-events:auto}
-  #agency .agScan{position:absolute;inset:0;pointer-events:none;opacity:.5;
-    background:repeating-linear-gradient(0deg,transparent 0 2px,rgba(255,255,255,.018) 2px 3px)}
-  #agClose{position:absolute;top:18px;right:22px;z-index:20;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer}
-  #agClose:hover{color:var(--text)}
-  .agCard{position:relative;width:min(94vw,720px);max-height:80vh;overflow-y:auto;scrollbar-width:thin;
-    background:linear-gradient(180deg,rgba(12,18,32,.86),rgba(7,11,20,.92));border:1px solid var(--accent);border-radius:18px;
-    padding:30px 34px 30px;box-shadow:0 0 60px rgba(0,0,0,.6), inset 0 0 60px rgba(0,0,0,.35);
-    backdrop-filter:blur(10px)}
-  .agCard::before,.agCard::after{content:"";position:absolute;width:22px;height:22px;border:2px solid var(--accent);opacity:.8}
-  .agCard::before{top:11px;left:11px;border-right:none;border-bottom:none;border-radius:6px 0 0 0}
-  .agCard::after{bottom:11px;right:11px;border-left:none;border-top:none;border-radius:0 0 6px 0}
-  .agHead{display:flex;align-items:center;gap:20px;margin-bottom:20px;flex-wrap:wrap}
-  .agLogo{height:44px;max-width:150px;object-fit:contain;margin-left:auto;align-self:center;
-    background:rgba(255,255,255,.92);border-radius:9px;padding:7px 11px;box-shadow:0 2px 14px rgba(0,0,0,.4)}
-  .agGallery{display:flex;flex-direction:column;gap:14px}
-  .agShot{border:1px solid rgba(255,255,255,.1);border-radius:12px;overflow:hidden;background:rgba(255,255,255,.03)}
-  .agShot img{display:block;width:100%;height:210px;object-fit:cover;background:#06080f}
-  .agShot .cap{font-size:12px;color:#cdd6ec;line-height:1.55;padding:10px 14px}
-  .agShot .cap b{color:var(--accent);font-weight:600;font-family:var(--mono);font-size:11px;display:block;margin-bottom:3px;letter-spacing:.5px}
-  .agEmblem{width:88px;height:88px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    border:2px solid var(--accent);position:relative;
-    background:radial-gradient(circle at 50% 38%, color-mix(in srgb,var(--accent) 30%, transparent), transparent 70%);
-    box-shadow:0 0 26px color-mix(in srgb,var(--accent) 45%, transparent), inset 0 0 18px color-mix(in srgb,var(--accent) 25%, transparent)}
-  .agEmblem::after{content:"";position:absolute;inset:7px;border:1px solid color-mix(in srgb,var(--accent) 55%, transparent);border-radius:50%}
-  .agEmblem span{font-family:var(--mono);font-weight:700;font-size:20px;letter-spacing:1px;color:#fff;text-shadow:0 0 10px var(--accent)}
-  .agEyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
-  .agTitleWrap h2{font-size:31px;font-weight:750;letter-spacing:-.4px;line-height:1.05}
-  .agMeta{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:7px;line-height:1.6}
-  .agMeta b{color:#cdd6ec;font-weight:500}
-  .agIntro{font-size:14px;line-height:1.72;color:#cdd6ec;margin:6px 0 4px;padding-top:18px;border-top:1px solid rgba(255,255,255,.09)}
+  #agency.show .agCard{animation:agIn .5s cubic-bezier(.2,.85,.2,1) both}
+  @keyframes agIn{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+  #agency .agFX{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  #agency .agFX::before{content:"";position:absolute;inset:-2px;opacity:.55;
+    background:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+    background-size:44px 44px;-webkit-mask-image:radial-gradient(circle at 50% 38%,#000,transparent 72%);mask-image:radial-gradient(circle at 50% 38%,#000,transparent 72%)}
+  #agency .agFX::after{content:"";position:absolute;left:0;right:0;top:-34%;height:34%;
+    background:linear-gradient(transparent,color-mix(in srgb,var(--accent) 9%, transparent),transparent);animation:agSweep 7.5s linear infinite}
+  @keyframes agSweep{to{top:100%}}
+  #agClose{position:absolute;top:18px;right:22px;z-index:22;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;transition:.15s}
+  #agClose:hover{color:var(--text);text-shadow:0 0 12px var(--accent)}
+  .agCard{position:relative;width:min(95vw,760px);max-height:86vh;display:flex;flex-direction:column;overflow:hidden;
+    border:1px solid color-mix(in srgb,var(--accent) 55%, transparent);border-radius:16px;
+    background:linear-gradient(180deg,rgba(10,16,28,.93),rgba(6,10,18,.96));
+    box-shadow:0 0 70px rgba(0,0,0,.65), 0 0 46px color-mix(in srgb,var(--accent) 20%, transparent), inset 0 0 60px rgba(0,0,0,.4);
+    backdrop-filter:blur(12px)}
+  .agC{position:absolute;width:17px;height:17px;border:2px solid var(--accent);z-index:6;pointer-events:none;opacity:.9}
+  .agC.tl{top:8px;left:8px;border-right:none;border-bottom:none}
+  .agC.tr{top:8px;right:8px;border-left:none;border-bottom:none}
+  .agC.bl{bottom:8px;left:8px;border-right:none;border-top:none}
+  .agC.br{bottom:8px;right:8px;border-left:none;border-top:none}
+  .agStatus{flex:none;display:flex;align-items:center;gap:10px;padding:11px 18px;font-family:var(--mono);font-size:10px;
+    letter-spacing:2px;text-transform:uppercase;color:var(--muted);
+    border-bottom:1px solid color-mix(in srgb,var(--accent) 24%, transparent);background:color-mix(in srgb,var(--accent) 6%, transparent)}
+  .agStatus .agStatusName{color:var(--accent)}
+  .agStatus .agStatusR{margin-left:auto;color:color-mix(in srgb,var(--accent) 65%, var(--muted))}
+  .agPulse{width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent);animation:agPulse 1.6s ease-in-out infinite}
+  @keyframes agPulse{0%,100%{opacity:1}50%{opacity:.2}}
+  .agHero{flex:none;position:relative;height:182px;background-size:cover;background-position:center;background-color:#06080f}
+  .agHeroGrad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(6,10,18,.12) 0%,rgba(6,10,18,.4) 48%,rgba(8,12,20,.97) 100%)}
+  .agHero .agLogo{position:absolute;top:14px;right:16px;z-index:3;height:38px;max-width:138px;object-fit:contain;
+    background:rgba(255,255,255,.93);border-radius:8px;padding:6px 10px;box-shadow:0 2px 16px rgba(0,0,0,.55)}
+  .agHeroBar{position:absolute;left:24px;right:24px;bottom:14px;z-index:3;display:flex;align-items:flex-end;gap:18px}
+  .agEmblem{width:82px;height:82px;flex:none;border-radius:50%;position:relative;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(circle at 50% 38%, color-mix(in srgb,var(--accent) 36%, transparent), rgba(6,10,18,.55) 72%);
+    box-shadow:0 0 32px color-mix(in srgb,var(--accent) 50%, transparent), inset 0 0 20px color-mix(in srgb,var(--accent) 28%, transparent)}
+  .agEmblem::before{content:"";position:absolute;inset:-5px;border-radius:50%;border:1px dashed color-mix(in srgb,var(--accent) 60%, transparent);animation:agSpin 20s linear infinite}
+  .agEmblem::after{content:"";position:absolute;inset:6px;border-radius:50%;border:1px solid color-mix(in srgb,var(--accent) 45%, transparent)}
+  @keyframes agSpin{to{transform:rotate(360deg)}}
+  .agEmblem span{font-family:var(--mono);font-weight:700;font-size:18px;letter-spacing:1px;color:#fff;text-shadow:0 0 12px var(--accent);z-index:2}
+  .agHeroBar .agEyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:4px;text-shadow:0 1px 8px rgba(0,0,0,.9)}
+  .agHeroBar h2{font-size:34px;font-weight:770;letter-spacing:-.6px;line-height:1.0;text-shadow:0 2px 16px rgba(0,0,0,.9)}
+  .agBody{flex:1;min-height:0;overflow-y:auto;scrollbar-width:thin;padding:18px 26px 26px}
+  .agBody::-webkit-scrollbar{width:7px} .agBody::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent) 35%, transparent);border-radius:4px}
+  .agMeta{font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.7;padding:10px 13px;border-radius:10px;
+    border:1px solid color-mix(in srgb,var(--accent) 22%, transparent);background:color-mix(in srgb,var(--accent) 6%, transparent)}
+  .agMeta b{color:#e9f0ff;font-weight:600}
+  .agIntro{font-size:14px;line-height:1.74;color:#cdd6ec;margin-top:16px}
   #agency h3{font-size:11px;font-family:var(--mono);color:var(--muted);letter-spacing:2px;text-transform:uppercase;
-    margin:24px 0 13px;display:flex;align-items:center;gap:9px}
-  #agency h3::before{content:"";width:15px;height:2px;background:var(--accent);border-radius:2px}
-  .agTimeline{display:flex;flex-direction:column;gap:0}
-  .agTl{display:grid;grid-template-columns:58px 1fr;gap:14px;padding:0 0 14px 0;position:relative}
-  .agTl::before{content:"";position:absolute;left:64px;top:6px;bottom:-2px;width:1px;background:rgba(255,255,255,.12)}
+    margin:26px 0 13px;display:flex;align-items:center;gap:9px}
+  #agency h3::before{content:"";width:16px;height:2px;background:var(--accent);border-radius:2px;box-shadow:0 0 8px var(--accent)}
+  .agTimeline{display:flex;flex-direction:column;gap:0;position:relative}
+  .agTl{display:grid;grid-template-columns:58px 1fr;gap:14px;padding:0 0 15px 0;position:relative}
+  .agTl::before{content:"";position:absolute;left:64px;top:7px;bottom:-2px;width:1px;background:linear-gradient(color-mix(in srgb,var(--accent) 50%, transparent),color-mix(in srgb,var(--accent) 12%, transparent))}
   .agTl:last-child::before{display:none}
   .agTl .yr{font-family:var(--mono);font-size:12px;color:var(--accent);text-align:right;font-weight:600}
-  .agTl .ev{font-size:13px;line-height:1.5;color:#cdd6ec;position:relative;padding-left:16px}
-  .agTl .ev::before{content:"";position:absolute;left:-1px;top:5px;width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .agTl .ev{font-size:13px;line-height:1.5;color:#cdd6ec;position:relative;padding-left:18px}
+  .agTl .ev::before{content:"";position:absolute;left:-2px;top:4px;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px var(--accent),0 0 0 3px color-mix(in srgb,var(--accent) 18%, transparent)}
+  .agGallery{display:flex;flex-direction:column;gap:14px}
+  .agShot{position:relative;border:1px solid color-mix(in srgb,var(--accent) 22%, transparent);border-radius:12px;overflow:hidden;background:rgba(255,255,255,.03);transition:.2s}
+  .agShot:hover{border-color:color-mix(in srgb,var(--accent) 60%, transparent);box-shadow:0 0 22px color-mix(in srgb,var(--accent) 20%, transparent)}
+  .agShot img{display:block;width:100%;height:208px;object-fit:cover;background:#06080f;transition:transform .35s}
+  .agShot:hover img{transform:scale(1.04)}
+  .agShot .cap{font-size:12px;color:#cdd6ec;line-height:1.55;padding:10px 14px;border-top:1px solid color-mix(in srgb,var(--accent) 16%, transparent)}
   .agTags{display:flex;flex-wrap:wrap;gap:7px}
-  .agTags span{font-family:var(--mono);font-size:11px;color:#cdd6ec;padding:5px 11px;border-radius:999px;
-    border:1px solid color-mix(in srgb,var(--accent) 40%, transparent);background:color-mix(in srgb,var(--accent) 9%, transparent)}
-  .agLink{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:12px;color:var(--accent);text-decoration:none;
-    border:1px solid var(--accent);border-radius:9px;padding:8px 15px;transition:.15s}
-  .agLink:hover{background:color-mix(in srgb,var(--accent) 18%, transparent)}
+  .agTags span{font-family:var(--mono);font-size:11px;color:#cdd6ec;padding:5px 11px;border-radius:7px;
+    border:1px solid color-mix(in srgb,var(--accent) 40%, transparent);background:color-mix(in srgb,var(--accent) 10%, transparent)}
+  .agLink{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:12px;color:var(--accent);text-decoration:none;letter-spacing:.5px;
+    border:1px solid var(--accent);border-radius:8px;padding:9px 16px;transition:.15s}
+  .agLink:hover{background:color-mix(in srgb,var(--accent) 18%, transparent);box-shadow:0 0 18px color-mix(in srgb,var(--accent) 30%, transparent)}
   .agNote{margin-top:16px;font-size:10px;color:var(--muted);opacity:.7;line-height:1.5}
-  .agNav{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:20}
-  .agNav button{background:rgba(10,14,26,.6);border:1px solid rgba(255,255,255,.14);color:var(--text);border-radius:9px;
-    padding:9px 16px;cursor:pointer;font-family:var(--mono);font-size:12px;backdrop-filter:blur(10px);transition:.15s}
-  .agNav button:hover{border-color:var(--accent);color:var(--accent)}
+  .agNav{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:22}
+  .agNav button{background:rgba(10,14,26,.62);border:1px solid color-mix(in srgb,var(--accent) 35%, transparent);color:var(--text);border-radius:9px;
+    padding:9px 16px;cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.5px;backdrop-filter:blur(10px);transition:.15s}
+  .agNav button:hover{border-color:var(--accent);color:var(--accent);box-shadow:0 0 16px color-mix(in srgb,var(--accent) 25%, transparent)}
 
   /* ---- globe location picker ---- */
   #globe{position:fixed;inset:0;z-index:10;opacity:0;pointer-events:none;transition:opacity .35s;
@@ -391,12 +415,15 @@
     #planetFacts{flex:1 1 auto;max-width:none;width:100%;height:auto;border-left:none;border-top:1px solid rgba(255,255,255,.08);padding:20px 18px 88px}
     #planetFacts h2{font-size:31px}
     #planetNav{left:50%;bottom:14px}
-    #agency{padding:12px}
-    .agCard{padding:24px 20px;max-height:80vh}
-    .agHead{gap:14px}
-    .agEmblem{width:64px;height:64px}
-    .agEmblem span{font-size:15px}
-    .agTitleWrap h2{font-size:23px}
+    #agency{padding:10px}
+    .agCard{max-height:90vh}
+    .agHero{height:142px}
+    .agHero .agLogo{height:32px;max-width:108px;top:12px;right:12px}
+    .agHeroBar{left:16px;right:16px;gap:13px}
+    .agEmblem{width:60px;height:60px}
+    .agEmblem span{font-size:14px}
+    .agHeroBar h2{font-size:23px}
+    .agBody{padding:15px 16px 26px}
     .agTl{grid-template-columns:46px 1fr;gap:10px}
     .agTl::before{left:51px}
     #globe{padding:46px 10px 96px}
@@ -505,27 +532,34 @@
 </div>
 
 <div id="agency">
-  <div class="agScan"></div>
+  <div class="agFX"></div>
   <button id="agClose" title="Close">✕</button>
   <div class="agCard">
-    <div class="agHead">
-      <div class="agEmblem"><span id="agAcro"></span></div>
-      <div class="agTitleWrap">
-        <div class="agEyebrow" id="agType"></div>
-        <h2 id="agName"></h2>
-        <div class="agMeta" id="agMeta"></div>
-      </div>
+    <i class="agC tl"></i><i class="agC tr"></i><i class="agC bl"></i><i class="agC br"></i>
+    <div class="agStatus"><span class="agPulse"></span>DOSSIER<span class="agStatusName" id="agStatusName"></span><span class="agStatusR">ARCHIVE · LIVE LINK</span></div>
+    <div class="agHero" id="agHero">
+      <div class="agHeroGrad"></div>
       <img id="agLogo" class="agLogo" alt="" />
+      <div class="agHeroBar">
+        <div class="agEmblem"><span id="agAcro"></span></div>
+        <div class="agTitleWrap">
+          <div class="agEyebrow" id="agType"></div>
+          <h2 id="agName"></h2>
+        </div>
+      </div>
     </div>
-    <p class="agIntro" id="agIntro"></p>
-    <h3>Milestones</h3>
-    <div class="agTimeline" id="agMilestones"></div>
-    <h3 id="agGalH">In pictures · history &amp; missions</h3>
-    <div class="agGallery" id="agGallery"></div>
-    <h3>Active programs</h3>
-    <div class="agTags" id="agPrograms"></div>
-    <a class="agLink" id="agSite" target="_blank" rel="noopener noreferrer">Official site ↗</a>
-    <div class="agNote">Profiles compiled from public sources, current to early 2026.</div>
+    <div class="agBody">
+      <div class="agMeta" id="agMeta"></div>
+      <p class="agIntro" id="agIntro"></p>
+      <h3>Milestones</h3>
+      <div class="agTimeline" id="agMilestones"></div>
+      <h3 id="agGalH">In pictures · history &amp; missions</h3>
+      <div class="agGallery" id="agGallery"></div>
+      <h3>Active programs</h3>
+      <div class="agTags" id="agPrograms"></div>
+      <a class="agLink" id="agSite" target="_blank" rel="noopener noreferrer">Official site ↗</a>
+      <div class="agNote">Profiles compiled from public sources, current to early 2026.</div>
+    </div>
   </div>
   <div class="agNav"><button id="agPrev" title="Previous">‹ Prev</button><button id="agNext" title="Next">Next ›</button></div>
 </div>
@@ -1882,6 +1916,8 @@ function openAgency(i){ agIdx=(i+AGENCIES.length)%AGENCIES.length; const a=AGENC
   document.getElementById('agPrograms').innerHTML=a.programs.map(p=>`<span>${escH(p)}</span>`).join('');
   document.getElementById('agSite').href=/^https?:\/\//.test(a.site)?a.site:'#';
   const m=AGENCY_MEDIA[a.acro]||{}, logo=document.getElementById('agLogo');   // official logo + historical gallery
+  document.getElementById('agStatusName').textContent=(AG_SHORT[a.acro]||a.name).toUpperCase();
+  document.getElementById('agHero').style.backgroundImage = (m.gallery&&m.gallery[0]) ? `url("${commonsImg(m.gallery[0][0],1100)}")` : 'none';
   if(m.logo){ logo.style.display=''; logo.onerror=()=>{logo.style.display='none';}; logo.src=commonsImg(m.logo,260); }
   else logo.style.display='none';
   const gal=document.getElementById('agGallery'), galH=document.getElementById('agGalH');
