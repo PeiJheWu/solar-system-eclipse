@@ -636,10 +636,7 @@ const texLoader=new THREE.TextureLoader(manager);
 const maxAniso=renderer.capabilities.getMaxAnisotropy();
 function colorTex(f){ const t=texLoader.load(BASE+f); t.colorSpace=THREE.SRGBColorSpace; t.anisotropy=maxAniso; return t; }
 function dataTex(f){ const t=texLoader.load(BASE+f); t.anisotropy=maxAniso; return t; }
-const earthImg=new Image(); earthImg.crossOrigin="anonymous"; let earthData=null;   // for the 2D globe picker
-earthImg.onload=()=>{ const c=document.createElement('canvas'); c.width=earthImg.width; c.height=earthImg.height;
-  const x=c.getContext('2d'); x.drawImage(earthImg,0,0); try{ earthData=x.getImageData(0,0,c.width,c.height); }catch(e){} };
-earthImg.src=BASE+"earthmap1k.jpg";
+const gEarthTex=colorTex("earthmap1k.jpg"), gBumpTex=dataTex("earthbump1k.jpg"), gCloudTex=colorTex("earthcloudmap.jpg"); // preloaded for the 3D globe picker
 manager.onLoad=()=>document.getElementById('loading').classList.add('hide');
 setTimeout(()=>document.getElementById('loading').classList.add('hide'),9000); // fallback
 
@@ -1426,20 +1423,20 @@ function glowMarker(color,scale){ const s=new THREE.Sprite(new THREE.SpriteMater
 function initGlobe(){
   gInit=true;
   gRenderer=new THREE.WebGLRenderer({canvas:gCv,antialias:true});
-  gRenderer.setClearColor(0x05070f,1); gRenderer.toneMapping=THREE.ACESFilmicToneMapping; gRenderer.toneMappingExposure=0.78; gRenderer.outputColorSpace=THREE.SRGBColorSpace;
+  gRenderer.setClearColor(0x05070f,1); gRenderer.toneMapping=THREE.ACESFilmicToneMapping; gRenderer.toneMappingExposure=1.12; gRenderer.outputColorSpace=THREE.SRGBColorSpace;
   gScene=new THREE.Scene();
-  gCam=new THREE.PerspectiveCamera(32,1,0.1,100); gCam.position.set(0.2,0.5,3.0);
+  gCam=new THREE.PerspectiveCamera(34,1,0.1,100); gCam.position.set(0.3,0.8,4.4);   // pulled back → whole globe fits
   gControls=new OrbitControls(gCam,gCv); gControls.enableDamping=true; gControls.dampingFactor=0.08;
-  gControls.enablePan=false; gControls.minDistance=1.5; gControls.maxDistance=6; gControls.rotateSpeed=0.5;
+  gControls.enablePan=false; gControls.minDistance=2.5; gControls.maxDistance=9; gControls.rotateSpeed=0.5;
   gControls.autoRotate=true; gControls.autoRotateSpeed=0.45;
-  gScene.add(new THREE.AmbientLight(0x33415e,0.78));                              // mostly even, soft day/night
-  gLight=new THREE.DirectionalLight(0xfff2e0,1.15); gScene.add(gLight); gScene.add(gLight.target);
+  gScene.add(makeStars(260,9,24,1.5,0.75));                                       // visible space backdrop (corners read as stars)
+  gScene.add(new THREE.AmbientLight(0x556686,1.6));                              // bright + mostly even so the whole globe is clear
+  gLight=new THREE.DirectionalLight(0xfff2e0,0.95); gScene.add(gLight); gScene.add(gLight.target);  // gentle shading for 3D form
   gEarth=new THREE.Mesh(new THREE.SphereGeometry(1,96,96), new THREE.MeshStandardMaterial({
-    map:colorTex("earthmap1k.jpg"), bumpMap:dataTex("earthbump1k.jpg"), bumpScale:0.012,
-    roughness:0.95, metalness:0.0 }));                                            // matte — no harsh ocean glint
+    map:gEarthTex, bumpMap:gBumpTex, bumpScale:0.012, roughness:0.95, metalness:0.0 }));   // matte — no harsh ocean glint
   gScene.add(gEarth);
   gClouds=new THREE.Mesh(new THREE.SphereGeometry(1.012,96,96), new THREE.MeshStandardMaterial({
-    map:colorTex("earthcloudmap.jpg"), alphaMap:colorTex("earthcloudmap.jpg"), transparent:true, opacity:0.85, depthWrite:false, roughness:1 }));
+    map:gCloudTex, alphaMap:gCloudTex, transparent:true, opacity:0.85, depthWrite:false, roughness:1 }));
   gScene.add(gClouds);
   const atmoMat=new THREE.ShaderMaterial({ transparent:true, blending:THREE.AdditiveBlending, side:THREE.BackSide, depthWrite:false,
     uniforms:{uColor:{value:new THREE.Color(0x3f78c0)}},
@@ -1454,8 +1451,7 @@ function initGlobe(){
   const gg=new THREE.BufferGeometry(); gg.setAttribute('position',new THREE.BufferAttribute(arr,3));
   gScene.add(new THREE.LineSegments(gg,new THREE.LineBasicMaterial({color:0x5fe3ff,transparent:true,opacity:0.14,blending:THREE.AdditiveBlending,depthWrite:false})));
   gPin=glowMarker(0xff5a3c,0.4); gPin.visible=false; gScene.add(gPin);
-  gComposer=new EffectComposer(gRenderer); gComposer.addPass(new RenderPass(gScene,gCam));
-  gBloom=new UnrealBloomPass(new THREE.Vector2(1,1),0.12,0.4,0.85); gComposer.addPass(gBloom); gComposer.addPass(new OutputPass());
+  // render directly (no bloom/composer → clean dark corners, no haze; renderer applies tone mapping)
   // pick (raycast), distinguished from a drag
   const ray=new THREE.Raycaster(), pt=new THREE.Vector2(); let dn=null;
   gCv.addEventListener('pointerdown',e=>{ dn=[e.clientX,e.clientY]; });
@@ -1465,13 +1461,12 @@ function initGlobe(){
     if(h.length){ const p=h[0].point.clone().normalize(); gpin={lat:Math.asin(Math.max(-1,Math.min(1,p.y)))*R2D, lon:Math.atan2(p.x,p.z)*R2D}; obsReadout(); } });
 }
 function gResize(){ if(!gInit) return; const w=gCv.clientWidth||480,h=gCv.clientHeight||480, d=Math.min(devicePixelRatio||1,2);
-  gRenderer.setPixelRatio(d); gRenderer.setSize(w,h,false); gComposer.setPixelRatio(d); gComposer.setSize(w,h); gBloom.setSize(w,h);
-  gCam.aspect=w/h; gCam.updateProjectionMatrix(); }
+  gRenderer.setPixelRatio(d); gRenderer.setSize(w,h,false); gCam.aspect=w/h; gCam.updateProjectionMatrix(); }
 function renderGlobe(){
   const ss=subSolar(state,simDay), L=g3(ss.lat,ss.lon);
   gLight.position.set(L[0]*10,L[1]*10,L[2]*10); gLight.target.position.set(0,0,0);
   if(gpin){ const P=g3(gpin.lat,gpin.lon); gPin.visible=true; gPin.position.set(P[0]*1.05,P[1]*1.05,P[2]*1.05); } else gPin.visible=false;
-  gClouds.rotation.y+=0.0004; gControls.update(); gComposer.render();
+  gClouds.rotation.y+=0.0004; gControls.update(); gRenderer.render(gScene,gCam);
 }
 function obsReadout(){ document.getElementById('obsReadout').textContent = gpin?`Site ${fmtLat(gpin.lat)} ${fmtLon(gpin.lon)}`:'Tap the globe to choose'; }
 function updateBadge(){ const el=document.getElementById('obsBadge');
@@ -1518,6 +1513,11 @@ window.__sim={ rev:THREE.REVISION,
   path:()=>{ const p=totalityPath(); return {n:p.length, first:p[0], mid:p[p.length>>1], last:p[p.length-1]}; },
   umbra:()=>umbraGround(state,simDay),
   setObs:(lat,lon)=>{ observer = (lat==null)?null:{lat,lon}; },
+  globeProbe:()=>({ init:gInit, mapLoaded:!!(gEarth&&gEarth.material.map&&gEarth.material.map.image),
+    camPos:gCam?gCam.position.toArray().map(v=>+v.toFixed(1)):null,
+    lightPos:gLight?gLight.position.toArray().map(v=>+v.toFixed(1)):null,
+    rendererSize:gRenderer?[gRenderer.domElement.width,gRenderer.domElement.height]:null }),
+  globeForceLightFromCam:()=>{ if(!gLight||!gCam) return; gLight.position.copy(gCam.position); gRenderer.render(gScene,gCam); },
   obsEclipse:()=>{ const v=eclipseView(state); return {kind:v.kind,cover:+v.cover.toFixed(3),sep:+v.sep.toFixed(2),sunAlt:v.sunAlt!=null?+v.sunAlt.toFixed(1):null,visible:v.visible}; },
   moonChk:()=>({ earthMoonDisplay:+moon.position.distanceTo(earth.position).toFixed(2),
     expectDist:+(0.56*bodies[2].scale.x*4.2).toFixed(2), moonScale:+moon.scale.x.toFixed(2),
