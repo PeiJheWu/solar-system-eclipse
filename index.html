@@ -182,6 +182,34 @@
     padding:6px 10px;border-radius:8px;cursor:pointer;font-size:11px;font-family:var(--mono);flex:none}
   .vjump:hover{background:rgba(95,227,255,.2);border-color:var(--cyan)}
 
+  /* ---- space news / mission feed ---- */
+  #news{position:fixed;z-index:9;top:50%;left:50%;transform:translate(-50%,-50%) scale(.97);
+    width:min(94vw,540px);max-height:84vh;display:flex;flex-direction:column;opacity:0;pointer-events:none;
+    background:var(--panel);border:1px solid var(--panel-bd);border-radius:16px;backdrop-filter:blur(16px);
+    box-shadow:0 16px 60px rgba(0,0,0,.6);transition:.3s ease;overflow:hidden}
+  #news.show{opacity:1;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+  #newsFilters{display:flex;gap:6px;flex-wrap:wrap;padding:11px 14px;border-bottom:1px solid var(--panel-bd)}
+  #newsFilters button{background:rgba(95,227,255,.08);border:1px solid var(--panel-bd);color:var(--text);
+    padding:5px 11px;border-radius:999px;cursor:pointer;font-size:11px;font-family:var(--mono);transition:.15s}
+  #newsFilters button:hover{background:rgba(95,227,255,.18)}
+  #newsFilters button.on{background:var(--cyan);color:#04121a;border-color:var(--cyan);font-weight:600}
+  #newsList{overflow-y:auto;padding:2px 0 8px}
+  .nsub{font-size:10px;text-transform:uppercase;letter-spacing:1.6px;color:var(--amber);padding:14px 16px 6px}
+  .launch{display:flex;gap:12px;align-items:flex-start;padding:9px 16px;border-top:1px solid rgba(255,255,255,.06)}
+  .launch:first-of-type{border-top:none}
+  .launch .ld{font-family:var(--mono);font-size:11px;color:var(--cyan);width:52px;flex:none;text-align:right;padding-top:1px}
+  .launch .lm{flex:1;min-width:0}
+  .launch .lt{font-size:12.5px;color:var(--text);line-height:1.35}
+  .launch .ls{font-size:10.5px;color:var(--muted);margin-top:2px;font-family:var(--mono)}
+  a.nart{display:block;padding:10px 16px;border-top:1px solid rgba(255,255,255,.06);text-decoration:none}
+  a.nart:hover{background:rgba(95,227,255,.06)}
+  a.nart .nt{font-size:12.5px;color:var(--text);line-height:1.42}
+  a.nart:hover .nt{color:var(--cyan)}
+  a.nart .nmeta{font-size:10px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+  a.nart .nsrc{color:var(--amber)}
+  .nstate{padding:26px 18px;text-align:center;color:var(--muted);font-size:12.5px}
+  .nnote{padding:12px 16px 6px;font-size:9.5px;color:var(--muted);line-height:1.5;opacity:.8}
+
   /* ---- globe location picker ---- */
   #globe{position:fixed;inset:0;z-index:10;opacity:0;pointer-events:none;transition:opacity .35s;
     background:radial-gradient(120% 100% at 50% 0%, #0a1020, #04060e 70%);
@@ -347,9 +375,10 @@
   <button id="earthBtn" title="Enter Earth — watch the eclipse from the surface">🌍</button>
   <button id="mapBtn" title="Totality path & Saros cycle">🗺</button>
   <button id="viewBtn" title="Best viewing — opposition & greatest elongation">🔭</button>
+  <button id="newsBtn" title="Live space news & upcoming launches">📡</button>
 </div>
 
-<div class="hint">drag = orbit · scroll = zoom · space = play/pause · tap a planet → facts · 🌍 Earth = site · 🗺 path & Saros · 🔭 events</div>
+<div class="hint">drag = orbit · scroll = zoom · tap a planet → facts · 🌍 Earth = site · 🗺 path & Saros · 🔭 events · 📡 live space news</div>
 <div id="obsBadge"></div>
 
 <div id="surface">
@@ -372,6 +401,12 @@
 <div id="viewing">
   <div class="vhead">🔭 Sky events · 天象<button id="exitView">✕</button></div>
   <div id="viewList"></div>
+</div>
+
+<div id="news">
+  <div class="vhead">📡 Mission Feed · Latest from space<button id="exitNews">✕</button></div>
+  <div id="newsFilters"></div>
+  <div id="newsList"></div>
 </div>
 
 <div id="globe">
@@ -1565,6 +1600,55 @@ function openViewing(){
 function closeViewing(){ viewEl.classList.remove('show'); }
 document.getElementById('viewBtn').onclick=openViewing;
 document.getElementById('exitView').onclick=closeViewing;
+
+/* ============================================================
+   MISSION FEED — live space news (Spaceflight News API) + upcoming launches (Launch Library 2)
+   ============================================================ */
+const NEWS_FILTERS=[['All',''],['NASA','NASA'],['SpaceX','SpaceX'],['ESA','ESA'],['China','China'],['Moon','Moon'],['Mars','Mars']];
+let newsActive=false, newsFilter='', newsCache={}, launchCache=null, launchCacheT=0;
+const escH=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function relTime(iso){ const s=(new Date(iso)-Date.now())/1000, a=Math.abs(s);
+  const t = a<3600?Math.max(1,Math.round(a/60))+'m' : a<86400?Math.round(a/3600)+'h' : Math.round(a/86400)+'d';
+  return s<0 ? t+' ago' : 'in '+t; }
+function fmtUTC(iso){ try{ return new Date(iso).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',timeZone:'UTC'})+' UTC'; }catch(e){ return ''; } }
+async function getArticles(q){
+  const key=q||'all', c=newsCache[key]; if(c && Date.now()-c.t<300000) return c.data;
+  const r=await fetch('https://api.spaceflightnewsapi.net/v4/articles/?limit=16'+(q?'&search='+encodeURIComponent(q):''));
+  const j=await r.json();
+  const data=(j.results||[]).map(a=>({title:a.title, url:/^https?:\/\//.test(a.url||'')?a.url:'#', site:a.news_site, date:a.published_at}));
+  newsCache[key]={t:Date.now(), data}; return data;
+}
+async function getLaunches(){
+  if(launchCache && Date.now()-launchCacheT<600000) return launchCache;
+  try{ const r=await fetch('https://ll.thespacedevs.com/2.2.0/launch/upcoming/?limit=5&hide_recent_previous=true'); if(!r.ok) throw 0;
+    const j=await r.json();
+    launchCache=(j.results||[]).map(l=>({ name:l.name, prov:(l.launch_service_provider&&l.launch_service_provider.name)||'—',
+      when:fmtUTC(l.net), rel:relTime(l.net) }));
+    launchCacheT=Date.now(); return launchCache;
+  }catch(e){ return launchCache||[]; }
+}
+function renderNewsFilters(){ const fb=document.getElementById('newsFilters'); fb.innerHTML='';
+  NEWS_FILTERS.forEach(([label,q])=>{ const b=document.createElement('button'); b.textContent=label; if(q===newsFilter) b.classList.add('on');
+    b.onclick=()=>{ newsFilter=q; renderNewsFilters(); loadNews(); }; fb.appendChild(b); }); }
+async function loadNews(){
+  const list=document.getElementById('newsList'); list.innerHTML='<div class="nstate">Loading the latest from orbit…</div>';
+  try{
+    const [launches, arts]=await Promise.all([ getLaunches(), getArticles(newsFilter) ]);
+    let html='';
+    if(launches.length){ html+='<div class="nsub">🚀 Upcoming launches</div>'+launches.map(l=>
+      `<div class="launch"><div class="ld">${escH(l.rel)}</div><div class="lm"><div class="lt">${escH(l.name)}</div><div class="ls">${escH(l.prov)} · ${escH(l.when)}</div></div></div>`).join(''); }
+    html+='<div class="nsub">🛰 Latest news'+(newsFilter?' · '+escH(newsFilter):'')+'</div>';
+    html+= arts.length ? arts.map(a=>
+      `<a class="nart" href="${escH(a.url)}" target="_blank" rel="noopener noreferrer"><div class="nt">${escH(a.title)}</div><div class="nmeta"><span class="nsrc">${escH(a.site)}</span> · ${escH(relTime(a.date))}</div></a>`).join('')
+      : '<div class="nstate">No recent articles for this filter.</div>';
+    html+='<div class="nnote">Live feed · headlines via Spaceflight News API (aggregating NASA, SpaceX, ESA & more), launches via The Space Devs · Launch Library 2. Tap a headline to read it at the source.</div>';
+    list.innerHTML=html;
+  }catch(e){ list.innerHTML='<div class="nstate">Couldn’t reach the feeds right now — please try again in a moment.</div>'; }
+}
+function openNews(){ newsActive=true; document.getElementById('news').classList.add('show'); renderNewsFilters(); loadNews(); }
+function closeNews(){ newsActive=false; document.getElementById('news').classList.remove('show'); }
+document.getElementById('newsBtn').onclick=openNews;
+document.getElementById('exitNews').onclick=closeNews;
 
 /* ============================================================
    GLOBE location picker — choose the observing site; all eclipse

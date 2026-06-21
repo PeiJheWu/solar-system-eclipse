@@ -66,6 +66,11 @@ Single self-contained `index.html` — no build step.
   sidereal-rotation periods, obliquity, eccentricity, temperature), atmospheric composition, a set of
   notable features, and a detailed exploration history/outlook (curated to early 2026). Step through
   the planets with ‹ / › . (Earth's click still opens the observing-site globe.)
+- **📡 Live Mission Feed.** A 📡 panel pulls the **latest real space news** (aggregated across NASA,
+  SpaceX, ESA and more via the Spaceflight News API) and the **next upcoming launches** with live
+  countdowns (The Space Devs · Launch Library 2). Filter the news by NASA / SpaceX / ESA / China /
+  Moon / Mars; headlines link out to their original source. (Live feeds, fetched client-side and
+  cached briefly; they degrade gracefully if a service is unavailable.)
 - **Responsive.** Adapts framing and HUD for desktop and mobile.
 
 ## 🎮 Controls
