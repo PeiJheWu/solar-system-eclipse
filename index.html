@@ -497,7 +497,15 @@
     #globeLabels .globeLabel.city{font-size:9.5px;padding:3px 8px}
     #globeBar{bottom:14px;gap:8px;padding:9px 12px}
     #obsReadout{min-width:0;width:100%;font-size:11px}
-    #title,#forecast,#diagwrap,#watchDock{display:none}
+    #title,#forecast,#diagwrap{display:none}
+    #watchDock{flex-direction:row;align-items:center;left:6px;right:6px;top:auto;bottom:114px;width:auto;
+      max-height:none;gap:8px;overflow-x:auto;overflow-y:hidden;padding:7px 9px;
+      -webkit-mask-image:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 16px),transparent);
+      mask-image:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 16px),transparent)}
+    #watchDock .agDockH{flex:0 0 auto;writing-mode:vertical-rl;transform:rotate(180deg);padding:0;font-size:8px;letter-spacing:1px}
+    #watchDock .dockItem{flex:0 0 124px;width:124px}
+    #watchDock .dockItem:hover{transform:none}
+    #watchDock .dockT{-webkit-line-clamp:1;font-size:9px;padding:3px 2px 0}
     .hint{display:none}
     #clock{top:10px;left:10px;right:10px;min-width:0;padding:10px 14px}
     #clock .date{font-size:18px}
