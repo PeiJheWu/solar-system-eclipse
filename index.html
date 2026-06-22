@@ -264,6 +264,35 @@
   #vidClose:hover{color:var(--text)}
   #vidYT{font-family:var(--mono);font-size:12px;color:var(--cyan);text-decoration:none;border:1px solid var(--panel-bd);border-radius:8px;padding:8px 14px}
   #vidYT:hover{border-color:var(--cyan);background:rgba(95,227,255,.12)}
+
+  /* ---- about / field guide ---- */
+  #about{position:fixed;inset:0;z-index:24;display:flex;align-items:center;justify-content:center;padding:24px;
+    background:radial-gradient(130% 100% at 50% 0%, rgba(95,227,255,.10), #060912 55%, #02040a 100%);
+    opacity:0;pointer-events:none;transition:opacity .4s}
+  #about.show{opacity:1;pointer-events:auto}
+  .abCard{position:relative;width:min(94vw,720px);max-height:86vh;overflow-y:auto;scrollbar-width:thin;
+    background:linear-gradient(180deg,rgba(10,16,28,.94),rgba(6,10,18,.97));border:1px solid var(--panel-bd);border-radius:16px;
+    padding:30px 34px 28px;box-shadow:0 0 60px rgba(0,0,0,.6), 0 0 40px rgba(95,227,255,.12)}
+  .abCard::-webkit-scrollbar{width:7px} .abCard::-webkit-scrollbar-thumb{background:rgba(95,227,255,.3);border-radius:4px}
+  .abClose{position:absolute;top:14px;right:18px;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;transition:.15s}
+  .abClose:hover{color:var(--text)}
+  .abEyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--cyan);margin-bottom:8px}
+  .abCard h1{font-size:29px;font-weight:760;letter-spacing:-.4px;line-height:1.04;margin-bottom:11px}
+  .abLede{font-size:14.5px;line-height:1.7;color:#cdd6ec;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,.09)}
+  .abLede b,.abP b,.abNote b{color:#eaf3ff;font-weight:600}
+  .abCard h2{font-size:11px;font-family:var(--mono);color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin:22px 0 12px;display:flex;align-items:center;gap:9px}
+  .abCard h2::before{content:"";width:15px;height:2px;background:var(--cyan);border-radius:2px;box-shadow:0 0 8px var(--cyan)}
+  .abList{display:flex;flex-direction:column;gap:9px}
+  .abRow{display:grid;grid-template-columns:92px 1fr;gap:12px;align-items:baseline}
+  .abRow .k{font-family:var(--mono);font-size:12px;color:var(--cyan);text-align:right}
+  .abRow .v{font-size:13px;line-height:1.5;color:#cdd6ec}
+  .abP{font-size:13px;line-height:1.65;color:#cdd6ec;margin-bottom:9px}
+  .abNote{margin-top:18px;font-size:11px;color:var(--muted);line-height:1.6;background:rgba(255,255,255,.035);
+    border:1px solid rgba(255,255,255,.08);border-left:2px solid var(--amber);border-radius:0 9px 9px 0;padding:11px 14px}
+  .abStart{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:13px;color:#04121a;background:var(--cyan);
+    border:none;border-radius:9px;padding:11px 20px;cursor:pointer;font-weight:700;letter-spacing:.5px;transition:.15s}
+  .abStart:hover{box-shadow:0 0 22px rgba(95,227,255,.55)}
+  @media (max-width:780px){ .abCard{padding:24px 18px 22px} .abCard h1{font-size:24px} .abRow{grid-template-columns:78px 1fr;gap:10px} }
   #newsTabs{display:flex;gap:6px;padding:10px 14px 0}
   #newsTabs button{flex:1;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);
     padding:7px 4px 9px;cursor:pointer;font-size:12px;font-family:var(--mono);letter-spacing:.5px;transition:.15s}
@@ -618,6 +647,7 @@
   <button id="mapBtn" title="Totality path & Saros cycle">🗺</button>
   <button id="viewBtn" title="Best viewing — opposition & greatest elongation">🔭</button>
   <button id="newsBtn" title="Live space news & upcoming launches">📡</button>
+  <button id="aboutBtn" title="About this simulator — what it is & how to use it">ℹ</button>
 </div>
 
 <div class="hint">drag = orbit · scroll = zoom · tap a planet → facts · 🌍 Earth = site · 🗺 path & Saros · 🔭 events · 📡 live space news</div>
@@ -657,6 +687,46 @@
   <button id="vidClose" title="Close">✕</button>
   <div class="vidFrame"><iframe id="vidIframe" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
   <a id="vidYT" target="_blank" rel="noopener noreferrer">Watch on YouTube ↗</a>
+</div>
+
+<div id="about">
+  <div class="abCard">
+    <button class="abClose" id="aboutClose" title="Close">✕</button>
+    <div class="abEyebrow">◈ Field guide</div>
+    <h1>Solar System Engine</h1>
+    <div class="abLede">A real-time <b>gravitational N-body simulation</b> of the Solar System that derives every orbit from first-principles physics — then uses that motion to <b>predict solar &amp; lunar eclipses</b> and lets you watch one unfold from the ground.</div>
+
+    <h2>Explore</h2>
+    <div class="abList">
+      <div class="abRow"><span class="k">drag · scroll</span><span class="v">Orbit the camera and zoom (pinch on touch).</span></div>
+      <div class="abRow"><span class="k">⏯ · slider</span><span class="v">Play / pause and set the speed of time.</span></div>
+      <div class="abRow"><span class="k">⏪ · ⏭</span><span class="v">Run time backwards, or jump to the next / previous eclipse.</span></div>
+      <div class="abRow"><span class="k">🪐 planet</span><span class="v">Tap any planet for an astronomer's fact sheet — data, atmosphere, missions.</span></div>
+      <div class="abRow"><span class="k">🌍 Earth</span><span class="v">Open a 3D globe, pick an observing site, then watch the eclipse from there.</span></div>
+      <div class="abRow"><span class="k">🗺 map</span><span class="v">The totality path on a rotating Earth, plus the Saros cycle.</span></div>
+      <div class="abRow"><span class="k">🔭 events</span><span class="v">Best viewing — oppositions, greatest elongations, conjunctions.</span></div>
+      <div class="abRow"><span class="k">📡 feed</span><span class="v">Live space news &amp; launches, and profile dossiers for the space agencies.</span></div>
+      <div class="abRow"><span class="k">▶ watch</span><span class="v">Short official SpaceX clips, played inline (also on the left dock).</span></div>
+    </div>
+
+    <h2>How it works</h2>
+    <p class="abP"><b>Real gravity, not faked orbits.</b> Every body moves under F = G·m₁·m₂/r², integrated with a symplectic velocity-Verlet method (energy holds to ~10⁻¹⁵). Ellipses, periods, the Moon's regressing nodes and eclipse seasons all <b>emerge</b> from the physics.</p>
+    <p class="abP"><b>Eclipses from geometry.</b> Each step the Moon's elongation and ecliptic latitude are measured and classified Total / Annular / Hybrid / Partial (lunar via Earth's shadow cone). The umbra is projected onto a spinning, tilted Earth to draw the totality path, and the Saros cycle steps a series forward.</p>
+    <p class="abP"><b>From your spot.</b> Choose a site and the maths turns topocentric — real lunar parallax and the local horizon decide what that place actually sees, and "the next eclipse visible from here".</p>
+
+    <h2>Architecture</h2>
+    <div class="abList">
+      <div class="abRow"><span class="k">Engine</span><span class="v">Vanilla-JS N-body integrator (units: AU · days · solar masses).</span></div>
+      <div class="abRow"><span class="k">3D</span><span class="v">Three.js / WebGL — textured planets, a Sun shader, bloom, the globe &amp; planet viewers.</span></div>
+      <div class="abRow"><span class="k">2D</span><span class="v">Canvas — the ground-level eclipse view and the totality / Saros map.</span></div>
+      <div class="abRow"><span class="k">Live data</span><span class="v">News (Spaceflight News API), launches (Launch Library 2), imagery from NASA &amp; Wikimedia.</span></div>
+      <div class="abRow"><span class="k">Build</span><span class="v">A single self-contained index.html — no framework, no bundler.</span></div>
+    </div>
+
+    <div class="abNote">Honest notes: the simulation's geography is self-consistent <b>model coordinates</b>, not real-world map positions; the engine's Saros period is close to but not exactly the real 6585.32-day value (a point-mass model isn't a JPL-grade ephemeris); agency profiles are curated to early 2026, while the news &amp; launch feeds are live.</div>
+
+    <button class="abStart" id="aboutStart">Start exploring →</button>
+  </div>
 </div>
 
 <div id="agency">
@@ -1963,6 +2033,15 @@ function openNews(){ newsActive=true; document.getElementById('news').classList.
 function closeNews(){ newsActive=false; document.getElementById('news').classList.remove('show'); }
 document.getElementById('newsBtn').onclick=openNews;
 document.getElementById('exitNews').onclick=closeNews;
+
+/* ---- about / field guide ---- */
+function openAbout(){ document.getElementById('about').classList.add('show'); }
+function closeAbout(){ document.getElementById('about').classList.remove('show'); }
+document.getElementById('aboutBtn').onclick=openAbout;
+document.getElementById('aboutClose').onclick=closeAbout;
+document.getElementById('aboutStart').onclick=closeAbout;
+document.getElementById('about').addEventListener('click',e=>{ if(e.target.id==='about') closeAbout(); });
+try{ if(!localStorage.getItem('sse_seen_about')){ setTimeout(openAbout,1500); localStorage.setItem('sse_seen_about','1'); } }catch(e){}
 
 /* ---- space agencies & companies — cinematic profile dossiers ---- */
 const AGENCIES=[
