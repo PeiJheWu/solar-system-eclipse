@@ -272,10 +272,15 @@
   #about.show{opacity:1;pointer-events:auto}
   .abCard{position:relative;width:min(94vw,720px);max-height:86vh;overflow-y:auto;scrollbar-width:thin;
     background:linear-gradient(180deg,rgba(10,16,28,.94),rgba(6,10,18,.97));border:1px solid var(--panel-bd);border-radius:16px;
-    padding:30px 34px 28px;box-shadow:0 0 60px rgba(0,0,0,.6), 0 0 40px rgba(95,227,255,.12)}
+    padding:52px 34px 28px;box-shadow:0 0 60px rgba(0,0,0,.6), 0 0 40px rgba(95,227,255,.12)}
   .abCard::-webkit-scrollbar{width:7px} .abCard::-webkit-scrollbar-thumb{background:rgba(95,227,255,.3);border-radius:4px}
-  .abClose{position:absolute;top:14px;right:18px;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;transition:.15s}
+  .abClose{position:absolute;top:13px;right:16px;background:none;border:none;color:var(--muted);font-size:24px;cursor:pointer;transition:.15s;z-index:2}
   .abClose:hover{color:var(--text)}
+  .abLang{position:absolute;top:14px;left:18px;display:flex;gap:4px;z-index:2}
+  .abLang button{background:rgba(95,227,255,.08);border:1px solid var(--panel-bd);color:var(--muted);
+    font-family:var(--mono);font-size:10.5px;padding:4px 9px;border-radius:7px;cursor:pointer;transition:.13s}
+  .abLang button:hover{color:var(--text)}
+  .abLang button.on{background:var(--cyan);color:#04121a;border-color:var(--cyan);font-weight:600}
   .abEyebrow{font-family:var(--mono);font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--cyan);margin-bottom:8px}
   .abCard h1{font-size:29px;font-weight:760;letter-spacing:-.4px;line-height:1.04;margin-bottom:11px}
   .abLede{font-size:14.5px;line-height:1.7;color:#cdd6ec;padding-bottom:18px;border-bottom:1px solid rgba(255,255,255,.09)}
@@ -292,7 +297,7 @@
   .abStart{display:inline-block;margin-top:20px;font-family:var(--mono);font-size:13px;color:#04121a;background:var(--cyan);
     border:none;border-radius:9px;padding:11px 20px;cursor:pointer;font-weight:700;letter-spacing:.5px;transition:.15s}
   .abStart:hover{box-shadow:0 0 22px rgba(95,227,255,.55)}
-  @media (max-width:780px){ .abCard{padding:24px 18px 22px} .abCard h1{font-size:24px} .abRow{grid-template-columns:78px 1fr;gap:10px} }
+  @media (max-width:780px){ .abCard{padding:50px 18px 22px} .abCard h1{font-size:24px} .abRow{grid-template-columns:78px 1fr;gap:10px} }
   #newsTabs{display:flex;gap:6px;padding:10px 14px 0}
   #newsTabs button{flex:1;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--muted);
     padding:7px 4px 9px;cursor:pointer;font-size:12px;font-family:var(--mono);letter-spacing:.5px;transition:.15s}
@@ -692,40 +697,8 @@
 <div id="about">
   <div class="abCard">
     <button class="abClose" id="aboutClose" title="Close">✕</button>
-    <div class="abEyebrow">◈ Field guide</div>
-    <h1>Solar System Engine</h1>
-    <div class="abLede">A real-time <b>gravitational N-body simulation</b> of the Solar System that derives every orbit from first-principles physics — then uses that motion to <b>predict solar &amp; lunar eclipses</b> and lets you watch one unfold from the ground.</div>
-
-    <h2>Explore</h2>
-    <div class="abList">
-      <div class="abRow"><span class="k">drag · scroll</span><span class="v">Orbit the camera and zoom (pinch on touch).</span></div>
-      <div class="abRow"><span class="k">⏯ · slider</span><span class="v">Play / pause and set the speed of time.</span></div>
-      <div class="abRow"><span class="k">⏪ · ⏭</span><span class="v">Run time backwards, or jump to the next / previous eclipse.</span></div>
-      <div class="abRow"><span class="k">🪐 planet</span><span class="v">Tap any planet for an astronomer's fact sheet — data, atmosphere, missions.</span></div>
-      <div class="abRow"><span class="k">🌍 Earth</span><span class="v">Open a 3D globe, pick an observing site, then watch the eclipse from there.</span></div>
-      <div class="abRow"><span class="k">🗺 map</span><span class="v">The totality path on a rotating Earth, plus the Saros cycle.</span></div>
-      <div class="abRow"><span class="k">🔭 events</span><span class="v">Best viewing — oppositions, greatest elongations, conjunctions.</span></div>
-      <div class="abRow"><span class="k">📡 feed</span><span class="v">Live space news &amp; launches, and profile dossiers for the space agencies.</span></div>
-      <div class="abRow"><span class="k">▶ watch</span><span class="v">Short official SpaceX clips, played inline (also on the left dock).</span></div>
-    </div>
-
-    <h2>How it works</h2>
-    <p class="abP"><b>Real gravity, not faked orbits.</b> Every body moves under F = G·m₁·m₂/r², integrated with a symplectic velocity-Verlet method (energy holds to ~10⁻¹⁵). Ellipses, periods, the Moon's regressing nodes and eclipse seasons all <b>emerge</b> from the physics.</p>
-    <p class="abP"><b>Eclipses from geometry.</b> Each step the Moon's elongation and ecliptic latitude are measured and classified Total / Annular / Hybrid / Partial (lunar via Earth's shadow cone). The umbra is projected onto a spinning, tilted Earth to draw the totality path, and the Saros cycle steps a series forward.</p>
-    <p class="abP"><b>From your spot.</b> Choose a site and the maths turns topocentric — real lunar parallax and the local horizon decide what that place actually sees, and "the next eclipse visible from here".</p>
-
-    <h2>Architecture</h2>
-    <div class="abList">
-      <div class="abRow"><span class="k">Engine</span><span class="v">Vanilla-JS N-body integrator (units: AU · days · solar masses).</span></div>
-      <div class="abRow"><span class="k">3D</span><span class="v">Three.js / WebGL — textured planets, a Sun shader, bloom, the globe &amp; planet viewers.</span></div>
-      <div class="abRow"><span class="k">2D</span><span class="v">Canvas — the ground-level eclipse view and the totality / Saros map.</span></div>
-      <div class="abRow"><span class="k">Live data</span><span class="v">News (Spaceflight News API), launches (Launch Library 2), imagery from NASA &amp; Wikimedia.</span></div>
-      <div class="abRow"><span class="k">Build</span><span class="v">A single self-contained index.html — no framework, no bundler.</span></div>
-    </div>
-
-    <div class="abNote">Honest notes: the simulation's geography is self-consistent <b>model coordinates</b>, not real-world map positions; the engine's Saros period is close to but not exactly the real 6585.32-day value (a point-mass model isn't a JPL-grade ephemeris); agency profiles are curated to early 2026, while the news &amp; launch feeds are live.</div>
-
-    <button class="abStart" id="aboutStart">Start exploring →</button>
+    <div class="abLang" id="aboutLang"><button data-lang="en">EN</button><button data-lang="zh">中文</button><button data-lang="ja">日本語</button></div>
+    <div id="aboutBody"></div>
   </div>
 </div>
 
@@ -2034,13 +2007,100 @@ function closeNews(){ newsActive=false; document.getElementById('news').classLis
 document.getElementById('newsBtn').onclick=openNews;
 document.getElementById('exitNews').onclick=closeNews;
 
-/* ---- about / field guide ---- */
+/* ---- about / field guide (EN · 中文 · 日本語) ---- */
+const ABOUT_I18N={
+  en:{ eyebrow:`◈ Field guide`, title:`Solar System Engine`,
+    lede:`A real-time <b>gravitational N-body simulation</b> of the Solar System that derives every orbit from first-principles physics — then uses that motion to <b>predict solar &amp; lunar eclipses</b> and lets you watch one unfold from the ground.`,
+    hExplore:`Explore`, explore:[
+      [`drag · scroll`,`Orbit the camera and zoom (pinch on touch).`],
+      [`⏯ · slider`,`Play / pause and set the speed of time.`],
+      [`⏪ · ⏭`,`Run time backwards, or jump to the next / previous eclipse.`],
+      [`🪐 planet`,`Tap any planet for an astronomer's fact sheet — data, atmosphere, missions.`],
+      [`🌍 Earth`,`Open a 3D globe, pick an observing site, then watch the eclipse from there.`],
+      [`🗺 map`,`The totality path on a rotating Earth, plus the Saros cycle.`],
+      [`🔭 events`,`Best viewing — oppositions, greatest elongations, conjunctions.`],
+      [`📡 feed`,`Live space news &amp; launches, and profile dossiers for the space agencies.`],
+      [`▶ watch`,`Short official SpaceX clips, played inline (also on the left dock).`]],
+    hHow:`How it works`, how:[
+      `<b>Real gravity, not faked orbits.</b> Every body moves under F = G·m₁·m₂/r², integrated with a symplectic velocity-Verlet method (energy holds to ~10⁻¹⁵). Ellipses, periods, the Moon's regressing nodes and eclipse seasons all <b>emerge</b> from the physics.`,
+      `<b>Eclipses from geometry.</b> Each step the Moon's elongation and ecliptic latitude are measured and classified Total / Annular / Hybrid / Partial (lunar via Earth's shadow cone). The umbra is projected onto a spinning, tilted Earth to draw the totality path, and the Saros cycle steps a series forward.`,
+      `<b>From your spot.</b> Choose a site and the maths turns topocentric — real lunar parallax and the local horizon decide what that place actually sees, and "the next eclipse visible from here".`],
+    hArch:`Architecture`, arch:[
+      [`Engine`,`Vanilla-JS N-body integrator (units: AU · days · solar masses).`],
+      [`3D`,`Three.js / WebGL — textured planets, a Sun shader, bloom, the globe &amp; planet viewers.`],
+      [`2D`,`Canvas — the ground-level eclipse view and the totality / Saros map.`],
+      [`Live data`,`News (Spaceflight News API), launches (Launch Library 2), imagery from NASA &amp; Wikimedia.`],
+      [`Build`,`A single self-contained index.html — no framework, no bundler.`]],
+    note:`Honest notes: the simulation's geography is self-consistent <b>model coordinates</b>, not real-world map positions; the engine's Saros period is close to but not exactly the real 6585.32-day value (a point-mass model isn't a JPL-grade ephemeris); agency profiles are curated to early 2026, while the news &amp; launch feeds are live.`,
+    start:`Start exploring →` },
+  zh:{ eyebrow:`◈ 使用導覽`, title:`太陽系引擎`,
+    lede:`一個即時的<b>重力 N 體模擬</b>，每顆行星的軌道都由基本物理推導而來——再用這些運動<b>推算日食與月食</b>，並讓你站在地面觀看食的全程。`,
+    hExplore:`探索操作`, explore:[
+      [`拖曳 · 滾輪`,`旋轉鏡頭與縮放（手機用雙指縮放）。`],
+      [`⏯ · 滑桿`,`播放／暫停，並調整時間流速。`],
+      [`⏪ · ⏭`,`讓時間倒流，或跳到下一次／上一次食。`],
+      [`🪐 行星`,`點任一行星，看天文學家級的資料卡——數據、大氣、探測任務。`],
+      [`🌍 地球`,`開啟 3D 地球儀、選擇觀測地點，再從該地觀看日食。`],
+      [`🗺 地圖`,`旋轉地球上的全食帶，以及沙羅週期。`],
+      [`🔭 天象`,`最佳觀測——衝、大距、合。`],
+      [`📡 動態`,`即時太空新聞與發射，以及各太空機構的檔案。`],
+      [`▶ 影片`,`官方 SpaceX 短片，直接內嵌播放（左側也有）。`]],
+    hHow:`運作原理`, how:[
+      `<b>真實重力，不是假軌道。</b>每個天體都遵循 F = G·m₁·m₂/r²，以辛普力克的速度-Verlet 積分法推進（能量守恆達 ~10⁻¹⁵）。橢圓軌道、週期、月球交點的退行與「食季」全都從物理中自然湧現。`,
+      `<b>由幾何推算食。</b>每一步都量測月球的距角與黃緯，分類為全食／環食／混合食／偏食（月食則由地球陰影錐判定）。本影投影到自轉且傾斜的地球上畫出全食帶，沙羅週期則逐次推演一系列食。`,
+      `<b>從你的所在地看。</b>選定地點後，計算改為地表（地平）模式——真實的月球視差與當地地平線決定該地實際看得到什麼，以及「從這裡看得到的下一次食」。`],
+    hArch:`系統架構`, arch:[
+      [`引擎`,`純 JavaScript 的 N 體積分器（單位：AU · 日 · 太陽質量）。`],
+      [`3D`,`Three.js／WebGL——貼圖行星、太陽著色器、輝光、地球儀與行星檢視器。`],
+      [`2D`,`Canvas——地面日食畫面與全食帶／沙羅地圖。`],
+      [`即時資料`,`新聞（Spaceflight News API）、發射（Launch Library 2）、影像來自 NASA 與維基共享資源。`],
+      [`建置`,`單一自包含的 index.html——無框架、無打包工具。`]],
+    note:`誠實說明：模擬中的地理是自洽的<b>模型座標</b>，並非真實地圖位置；引擎的沙羅週期接近但不完全等於真實的 6585.32 天（點質量模型並非 JPL 等級星曆）；機構檔案整理至 2026 年初，新聞與發射則為即時。`,
+    start:`開始探索 →` },
+  ja:{ eyebrow:`◈ フィールドガイド`, title:`太陽系エンジン`,
+    lede:`リアルタイムの<b>重力 N 体シミュレーション</b>。すべての惑星軌道を基礎物理から導き、その運動から<b>日食・月食を予測</b>し、地上から食の一部始終を眺められます。`,
+    hExplore:`操作する`, explore:[
+      [`ドラッグ · スクロール`,`カメラの回転とズーム（スマホはピンチ）。`],
+      [`⏯ · スライダー`,`再生／一時停止と時間の速さ。`],
+      [`⏪ · ⏭`,`時間を逆行、または次／前の食へジャンプ。`],
+      [`🪐 惑星`,`惑星をタップで天文学者級のデータカード——諸元・大気・探査ミッション。`],
+      [`🌍 地球`,`3D 地球儀を開いて観測地点を選び、その場所から日食を観賞。`],
+      [`🗺 地図`,`自転する地球上の皆既帯と、サロス周期。`],
+      [`🔭 天象`,`観測の好機——衝・最大離角・合。`],
+      [`📡 フィード`,`最新の宇宙ニュースと打ち上げ、各宇宙機関のプロフィール。`],
+      [`▶ 動画`,`SpaceX 公式ショート動画をその場で再生（左のドックにも）。`]],
+    hHow:`しくみ`, how:[
+      `<b>本物の重力、見せかけの軌道ではありません。</b>各天体は F = G·m₁·m₂/r² に従い、シンプレクティックな速度ベルレ法で積分（エネルギー保存は ~10⁻¹⁵）。楕円軌道・周期・月の交点の後退・食の季節は、すべて物理から自然に現れます。`,
+      `<b>幾何から食を導く。</b>毎ステップ、月の離角と黄緯を測り、皆既／金環／ハイブリッド／部分に分類（月食は地球の影錐で判定）。本影を自転・傾斜した地球に投影して皆既帯を描き、サロス周期で一連の食を進めます。`,
+      `<b>あなたの場所から。</b>地点を選ぶと計算は地平座標に切り替わり、実際の月の視差と地平線が、その場所で何が見えるか、そして「ここから見える次の食」を決めます。`],
+    hArch:`アーキテクチャ`, arch:[
+      [`エンジン`,`バニラ JS の N 体積分器（単位：AU・日・太陽質量）。`],
+      [`3D`,`Three.js／WebGL——テクスチャ惑星、太陽シェーダー、ブルーム、地球儀と惑星ビューア。`],
+      [`2D`,`Canvas——地上の日食ビューと皆既帯／サロス地図。`],
+      [`ライブデータ`,`ニュース（Spaceflight News API）、打ち上げ（Launch Library 2）、画像は NASA とウィキメディア。`],
+      [`ビルド`,`単一完結の index.html——フレームワークもバンドラーもなし。`]],
+    note:`正直な注記：シミュレーション内の地理は自己整合的な<b>モデル座標</b>で、実地図の位置ではありません。エンジンのサロス周期は実際の 6585.32 日に近いものの完全一致ではありません（質点モデルは JPL 級の天体暦ではない）。機関プロフィールは 2026 年初頭時点、ニュースと打ち上げはライブです。`,
+    start:`探索をはじめる →` },
+};
+let aboutLang=(()=>{ try{ return localStorage.getItem('sse_lang')||'en'; }catch(e){ return 'en'; } })();
+function renderAbout(lang){ const t=ABOUT_I18N[lang]||ABOUT_I18N.en; aboutLang=lang;
+  document.querySelectorAll('#aboutLang button').forEach(b=>b.classList.toggle('on',b.dataset.lang===lang));
+  document.getElementById('aboutBody').innerHTML=
+    `<div class="abEyebrow">${t.eyebrow}</div><h1>${t.title}</h1><div class="abLede">${t.lede}</div>`+
+    `<h2>${t.hExplore}</h2><div class="abList">${t.explore.map(r=>`<div class="abRow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')}</div>`+
+    `<h2>${t.hHow}</h2>${t.how.map(p=>`<p class="abP">${p}</p>`).join('')}`+
+    `<h2>${t.hArch}</h2><div class="abList">${t.arch.map(r=>`<div class="abRow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')}</div>`+
+    `<div class="abNote">${t.note}</div><button class="abStart" id="aboutStart">${t.start}</button>`;
+  document.getElementById('aboutStart').onclick=closeAbout;
+  try{ localStorage.setItem('sse_lang',lang); }catch(e){}
+}
 function openAbout(){ document.getElementById('about').classList.add('show'); }
 function closeAbout(){ document.getElementById('about').classList.remove('show'); }
 document.getElementById('aboutBtn').onclick=openAbout;
 document.getElementById('aboutClose').onclick=closeAbout;
-document.getElementById('aboutStart').onclick=closeAbout;
+document.querySelectorAll('#aboutLang button').forEach(b=>b.onclick=()=>renderAbout(b.dataset.lang));
 document.getElementById('about').addEventListener('click',e=>{ if(e.target.id==='about') closeAbout(); });
+renderAbout(aboutLang);
 try{ if(!localStorage.getItem('sse_seen_about')){ setTimeout(openAbout,1500); localStorage.setItem('sse_seen_about','1'); } }catch(e){}
 
 /* ---- space agencies & companies — cinematic profile dossiers ---- */
