@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Solar System · Eclipse Predictor</title>
+<title>AI Solar System Engine · Eclipse Predictor</title>
 <style>
   :root{
     --cyan:#5fe3ff;
@@ -51,7 +51,11 @@
   .panel::after{bottom:-1px;right:-1px;border-bottom:1.5px solid var(--cyan);border-right:1.5px solid var(--cyan);border-radius:0 0 5px 0}
 
   #title{top:22px;left:24px;padding:16px 20px;max-width:340px}
-  #title h1{font-size:16px;letter-spacing:1.2px;font-weight:600;display:flex;align-items:center;gap:9px;text-transform:uppercase}
+  #title h1{font-size:16px;letter-spacing:1.2px;font-weight:600;display:flex;align-items:center;gap:9px;text-transform:uppercase;flex-wrap:wrap}
+  .aibadge{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:1.5px;color:#04121a;
+    padding:2px 8px;border-radius:999px;background:linear-gradient(100deg,#5fe3ff,#b07bff);
+    box-shadow:0 0 12px rgba(120,160,255,.55);text-transform:none;animation:aiGlow 3s ease-in-out infinite}
+  @keyframes aiGlow{0%,100%{box-shadow:0 0 10px rgba(95,227,255,.45)}50%{box-shadow:0 0 18px rgba(176,123,255,.7)}}
   #title h1 .dot{width:8px;height:8px;border-radius:50%;background:var(--amber);
     box-shadow:0 0 12px var(--amber);animation:pulse 2.4s infinite}
   #title .sub{margin-top:8px;font-size:11.5px;color:var(--muted);line-height:1.6;letter-spacing:.2px}
@@ -603,8 +607,8 @@
       </svg>
       <div class="ldSweep"></div>
     </div>
-    <div class="ldTitle">SOLAR&nbsp;SYSTEM&nbsp;ENGINE</div>
-    <div class="ldSub">GRAVITATIONAL N-BODY · ECLIPSE PREDICTION</div>
+    <div class="ldTitle">AI&nbsp;SOLAR&nbsp;SYSTEM&nbsp;ENGINE</div>
+    <div class="ldSub">AI-BUILT · GRAVITATIONAL N-BODY · ECLIPSE PREDICTION</div>
     <div class="ldBarWrap"><div class="ldBar" id="ldBar"></div></div>
     <div class="ldStatus" id="ldStatus">INITIALISING ORBITAL MODEL…</div>
   </div>
@@ -613,7 +617,7 @@
 <div id="banner">☀ Solar Eclipse · Lunar shadow intersecting Earth</div>
 
 <div class="panel" id="title">
-  <h1><span class="dot"></span>Solar System Engine</h1>
+  <h1><span class="dot"></span>AI Solar System Engine<span class="aibadge">✦ AI</span></h1>
   <div class="sub" data-i18n="sub">行星軌道由重力即時積分得出，用以推算日食。<br>
   N-body gravity · F=Gm₁m₂/r² → orbits & eclipse seasons.</div>
 </div>
@@ -1914,7 +1918,7 @@ document.getElementById('exitNews').onclick=closeNews;
 
 /* ---- about / field guide (EN · 中文 · 日本語) ---- */
 const ABOUT_I18N={
-  en:{ eyebrow:`◈ Field guide`, title:`Solar System Engine`,
+  en:{ eyebrow:`◈ AI Field guide`, title:`AI Solar System Engine`,
     lede:`A real-time <b>gravitational N-body simulation</b> of the Solar System that derives every orbit from first-principles physics — then uses that motion to <b>predict solar &amp; lunar eclipses</b> and lets you watch one unfold from the ground.`,
     hExplore:`Explore`, explore:[
       [`drag · scroll`,`Orbit the camera and zoom (pinch on touch).`],
@@ -1935,9 +1939,9 @@ const ABOUT_I18N={
       [`2D`,`Canvas — the ground-level eclipse (surface) view.`],
       [`Live data`,`News (Spaceflight News API), launches (Launch Library 2), imagery from NASA &amp; Wikimedia.`],
       [`Build`,`A single self-contained index.html — no framework, no bundler.`]],
-    note:`Honest notes: the simulation's geography is self-consistent <b>model coordinates</b>, not real-world map positions; a point-mass model isn't a JPL-grade ephemeris, so long-range eclipse dates drift from reality; agency profiles are curated to early 2026, while the news &amp; launch feeds are live.`,
+    note:`Honest notes: the simulation's geography is self-consistent <b>model coordinates</b>, not real-world map positions; a point-mass model isn't a JPL-grade ephemeris, so long-range eclipse dates drift from reality; agency profiles are curated to early 2026, while the news &amp; launch feeds are live. ✦ Designed &amp; built with AI (Claude).`,
     start:`Start exploring →` },
-  zh:{ eyebrow:`◈ 使用導覽`, title:`太陽系引擎`,
+  zh:{ eyebrow:`◈ AI 使用導覽`, title:`AI 太陽系引擎`,
     lede:`一個即時的<b>重力 N 體模擬</b>，每顆行星的軌道都由基本物理推導而來——再用這些運動<b>推算日食與月食</b>，並讓你站在地面觀看食的全程。`,
     hExplore:`探索操作`, explore:[
       [`拖曳 · 滾輪`,`旋轉鏡頭與縮放（手機用雙指縮放）。`],
@@ -1958,9 +1962,9 @@ const ABOUT_I18N={
       [`2D`,`Canvas——地面日食（地表）畫面。`],
       [`即時資料`,`新聞（Spaceflight News API）、發射（Launch Library 2）、影像來自 NASA 與維基共享資源。`],
       [`建置`,`單一自包含的 index.html——無框架、無打包工具。`]],
-    note:`誠實說明：模擬中的地理是自洽的<b>模型座標</b>，並非真實地圖位置；點質量模型並非 JPL 等級星曆，長期的食日期會與真實逐漸偏離；機構檔案整理至 2026 年初，新聞與發射則為即時。`,
+    note:`誠實說明：模擬中的地理是自洽的<b>模型座標</b>，並非真實地圖位置；點質量模型並非 JPL 等級星曆，長期的食日期會與真實逐漸偏離；機構檔案整理至 2026 年初，新聞與發射則為即時。✦ 本站由 AI（Claude）設計與建置。`,
     start:`開始探索 →` },
-  ja:{ eyebrow:`◈ フィールドガイド`, title:`太陽系エンジン`,
+  ja:{ eyebrow:`◈ AI フィールドガイド`, title:`AI 太陽系エンジン`,
     lede:`リアルタイムの<b>重力 N 体シミュレーション</b>。すべての惑星軌道を基礎物理から導き、その運動から<b>日食・月食を予測</b>し、地上から食の一部始終を眺められます。`,
     hExplore:`操作する`, explore:[
       [`ドラッグ · スクロール`,`カメラの回転とズーム（スマホはピンチ）。`],
@@ -1981,7 +1985,7 @@ const ABOUT_I18N={
       [`2D`,`Canvas——地上の日食（地表）ビュー。`],
       [`ライブデータ`,`ニュース（Spaceflight News API）、打ち上げ（Launch Library 2）、画像は NASA とウィキメディア。`],
       [`ビルド`,`単一完結の index.html——フレームワークもバンドラーもなし。`]],
-    note:`正直な注記：シミュレーション内の地理は自己整合的な<b>モデル座標</b>で、実地図の位置ではありません。質点モデルは JPL 級の天体暦ではないため、長期の食の日付は実際から徐々にずれます。機関プロフィールは 2026 年初頭時点、ニュースと打ち上げはライブです。`,
+    note:`正直な注記：シミュレーション内の地理は自己整合的な<b>モデル座標</b>で、実地図の位置ではありません。質点モデルは JPL 級の天体暦ではないため、長期の食の日付は実際から徐々にずれます。機関プロフィールは 2026 年初頭時点、ニュースと打ち上げはライブです。✦ 本サイトは AI（Claude）が設計・構築。`,
     start:`探索をはじめる →` },
 };
 let aboutLang=(()=>{ try{ return localStorage.getItem('sse_lang')||'en'; }catch(e){ return 'en'; } })();

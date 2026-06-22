@@ -1,4 +1,4 @@
-# 🌑 Solar System · Eclipse Predictor
+# 🌑 AI Solar System Engine · Eclipse Predictor
 
 A real-time **gravitational N-body simulation** of the Solar System that derives planetary
 orbits from first-principles physics and uses them to **predict solar eclipses** — then lets you
