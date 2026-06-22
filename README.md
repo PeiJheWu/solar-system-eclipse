@@ -27,10 +27,8 @@ Single self-contained `index.html` — no build step.
   you watch the full Moon slide into Earth's shadow and turn a coppery **"blood moon"** at totality.
 - **🗺 Totality path (全食帶).** The Moon's umbra is projected onto a rotating Earth (obliquity +
   sidereal spin) to draw the narrow ground track of totality — *where you'd have to stand*.
-- **Saros cycle explorer.** Step ±1 Saros (18 yr 11 d) and watch a series unfold: dates drift +11 days,
-  the path marches ~⅓ of the globe west, gamma migrates across the node, and the type evolves
-  (Annular → Hybrid → …). Includes an honest accuracy readout — the engine's Saros period vs the real
-  6585.32 d — since a point-mass N-body is not a JPL-grade ephemeris.
+- **🌐 Multilingual + Field Guide.** An in-app guide opens on every visit; pick **English / 中文 / 日本語**
+  and the whole interface switches to that language.
 - **🔭 Sky-events predictor.** Next **opposition** for the outer planets (closest, brightest, up all
   night — flags Mars' rare "great opposition") and **greatest elongation** for Mercury/Venus (morning vs
   evening star), with date, distance and an estimated apparent magnitude. Plus **conjunctions (合)** —

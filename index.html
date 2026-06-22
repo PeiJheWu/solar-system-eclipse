@@ -614,7 +614,7 @@
 
 <div class="panel" id="title">
   <h1><span class="dot"></span>Solar System Engine</h1>
-  <div class="sub">行星軌道由重力即時積分得出，用以推算日食。<br>
+  <div class="sub" data-i18n="sub">行星軌道由重力即時積分得出，用以推算日食。<br>
   N-body gravity · F=Gm₁m₂/r² → orbits & eclipse seasons.</div>
 </div>
 
@@ -642,48 +642,43 @@
 
 <div class="panel" id="controls">
   <button id="revBtn" title="Reverse the flow of time">⏪</button>
-  <button id="playBtn" title="Play / Pause (space)">⏸</button>
+  <button id="playBtn" data-i18n-title="tipPlay" title="Play / Pause (space)">⏸</button>
   <div class="speed">
-    <label><span id="tdir">▶ forward</span> · <b id="spd">8</b> days/s</label>
+    <label><span id="tdir">▶ forward</span> · <b id="spd">8</b> <span data-i18n="daysPerSec">days/s</span></label>
     <input id="speed" type="range" min="0.5" max="80" step="0.5" value="8" />
   </div>
   <button id="jump" title="Jump to next eclipse">⏭</button>
-  <button id="earthBtn" title="Enter Earth — watch the eclipse from the surface">🌍</button>
-  <button id="mapBtn" title="Totality path & Saros cycle">🗺</button>
-  <button id="viewBtn" title="Best viewing — opposition & greatest elongation">🔭</button>
-  <button id="newsBtn" title="Live space news & upcoming launches">📡</button>
-  <button id="aboutBtn" title="About this simulator — what it is & how to use it">ℹ</button>
+  <button id="earthBtn" data-i18n-title="tipEarth" title="Pick your observing site · enter Earth">🌍</button>
+  <button id="mapBtn" data-i18n-title="tipMap" title="Totality path map">🗺</button>
+  <button id="viewBtn" data-i18n-title="tipView" title="Sky events">🔭</button>
+  <button id="newsBtn" data-i18n-title="tipNews" title="Live space news, launches & agencies">📡</button>
+  <button id="aboutBtn" data-i18n-title="tipAbout" title="About — what this is & how to use it">ℹ</button>
 </div>
 
-<div class="hint">drag = orbit · scroll = zoom · tap a planet → facts · 🌍 Earth = site · 🗺 path & Saros · 🔭 events · 📡 live space news</div>
+<div class="hint" data-i18n="hint">drag = orbit · scroll = zoom · tap a planet → facts · 🌍 Earth = site · 🗺 totality path · 🔭 events · 📡 live space news</div>
 <div id="obsBadge"></div>
 <div id="watchDock"></div>
 
 <div id="surface">
   <canvas id="surfaceCanvas"></canvas>
   <div id="surfaceInfo"><div class="k" id="sKind">—</div><div class="c" id="sCov">—</div></div>
-  <button id="exitEarth">✕ 離開地球 · Exit to orbit</button>
+  <button id="exitEarth">✕ <span data-i18n="surfaceExit">Exit to orbit</span></button>
 </div>
 
 <div id="map">
-  <div id="mapTitle">Totality path · 全食帶<span id="mapType"></span></div>
+  <div id="mapTitle"><span data-i18n="mapTitle">Totality path</span><span id="mapType"></span></div>
   <canvas id="mapCanvas"></canvas>
-  <div id="sarosBar">
-    <button id="sarosPrev" title="Previous Saros (−18y 11d)">◀ Saros</button>
-    <div id="sarosInfo"><div class="sr1">—</div><div class="sr2">—</div></div>
-    <button id="sarosNext" title="Next Saros (+18y 11d)">Saros ▶</button>
-  </div>
-  <button id="exitMap">✕ Exit</button>
+  <button id="exitMap">✕ <span data-i18n="exit">Exit</span></button>
 </div>
 
 <div id="viewing">
-  <div class="vhead">🔭 Sky events · 天象<button id="exitView">✕</button></div>
+  <div class="vhead"><span data-i18n="skyHead">🔭 Sky events</span><button id="exitView">✕</button></div>
   <div id="viewList"></div>
 </div>
 
 <div id="news">
-  <div class="vhead">📡 Mission Feed<button id="exitNews">✕</button></div>
-  <div id="newsTabs"><button data-tab="feed" class="on">📡 Live feed</button><button data-tab="watch">▶ Watch</button><button data-tab="agencies">🏛 Agencies</button></div>
+  <div class="vhead"><span data-i18n="newsTitle">📡 Mission Feed</span><button id="exitNews">✕</button></div>
+  <div id="newsTabs"><button data-tab="feed" class="on" data-i18n="tabFeed">📡 Live feed</button><button data-tab="watch" data-i18n="tabWatch">▶ Watch</button><button data-tab="agencies" data-i18n="tabAgencies">🏛 Agencies</button></div>
   <div id="newsFilters"></div>
   <div id="newsList"></div>
 </div>
@@ -691,7 +686,7 @@
 <div id="vidbox">
   <button id="vidClose" title="Close">✕</button>
   <div class="vidFrame"><iframe id="vidIframe" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-  <a id="vidYT" target="_blank" rel="noopener noreferrer">Watch on YouTube ↗</a>
+  <a id="vidYT" data-i18n="watchYT" target="_blank" rel="noopener noreferrer">Watch on YouTube ↗</a>
 </div>
 
 <div id="about">
@@ -707,7 +702,7 @@
   <button id="agClose" title="Close">✕</button>
   <div class="agCard">
     <i class="agC tl"></i><i class="agC tr"></i><i class="agC bl"></i><i class="agC br"></i>
-    <div class="agStatus"><span class="agPulse"></span>DOSSIER<span class="agStatusName" id="agStatusName"></span><span class="agStatusR">ARCHIVE · LIVE LINK</span></div>
+    <div class="agStatus"><span class="agPulse"></span>DOSSIER<span class="agStatusName" id="agStatusName"></span><span class="agStatusR" data-i18n="agStatusR">ARCHIVE · LIVE LINK</span></div>
     <div class="agHero" id="agHero">
       <div class="agHeroGrad"></div>
       <img id="agLogo" class="agLogo" alt="" />
@@ -722,36 +717,36 @@
     <div class="agBody">
       <div class="agMeta" id="agMeta"></div>
       <p class="agIntro" id="agIntro"></p>
-      <h3>Milestones</h3>
+      <h3 data-i18n="agMilestones">Milestones</h3>
       <div class="agTimeline" id="agMilestones"></div>
-      <h3 id="agGalH">In pictures · history &amp; missions</h3>
+      <h3 id="agGalH" data-i18n="agPics">In pictures · history &amp; missions</h3>
       <div class="agGallery" id="agGallery"></div>
-      <h3>Active programs</h3>
+      <h3 data-i18n="agPrograms">Active programs</h3>
       <div class="agTags" id="agPrograms"></div>
-      <a class="agLink" id="agSite" target="_blank" rel="noopener noreferrer">Official site ↗</a>
+      <a class="agLink" id="agSite" data-i18n="agSite" target="_blank" rel="noopener noreferrer">Official site ↗</a>
       <div class="agNote">Profiles compiled from public sources, current to early 2026.</div>
     </div>
   </div>
-  <div class="agNav"><button id="agPrev" title="Previous">‹ Prev</button><button id="agNext" title="Next">Next ›</button></div>
+  <div class="agNav"><button id="agPrev" title="Previous" data-i18n="prev">‹ Prev</button><button id="agNext" title="Next" data-i18n="next">Next ›</button></div>
 </div>
 
 <div id="globe">
-  <div class="ghead">🌍 Pick your observing site<button id="exitGlobe">✕</button></div>
+  <div class="ghead"><span data-i18n="globeHead">🌍 Pick your observing site</span><button id="exitGlobe">✕</button></div>
   <canvas id="globeCanvas"></canvas>
-  <div id="globeHint">drag to rotate · tap the globe to drop a pin · or pick a continent, then a city</div>
+  <div id="globeHint" data-i18n="globeHint">drag to rotate · tap the globe to drop a pin · or pick a continent, then a city</div>
   <div id="globeCities"></div>
   <div id="globeLabels"></div>
   <div id="globeBar">
     <div id="obsReadout">No site selected</div>
-    <button id="useObs">Observe from here →</button>
-    <button id="bestObs">Best spot (geocentric)</button>
+    <button id="useObs" data-i18n="useObs">Observe from here →</button>
+    <button id="bestObs" data-i18n="bestObs">Best spot (geocentric)</button>
   </div>
 </div>
 
 <div id="planetInfo">
   <div class="phead"><span id="pTitle">Planet</span><button id="exitPlanet">✕</button></div>
   <canvas id="planetCanvas"></canvas>
-  <div id="planetNav"><button id="pPrev">‹ 上一顆</button><button id="pNext">下一顆 ›</button></div>
+  <div id="planetNav"><button id="pPrev" data-i18n="prev">‹ Prev</button><button id="pNext" data-i18n="next">Next ›</button></div>
   <div id="planetFacts"></div>
 </div>
 
@@ -1487,12 +1482,12 @@ playBtn.onclick=()=>{ playing=!playing; playBtn.textContent=playing?"⏸":"▶";
 const speedEl=document.getElementById('speed');
 speedEl.oninput=()=>{ speed=parseFloat(speedEl.value); document.getElementById('spd').textContent=speed; };
 const revBtn=document.getElementById('revBtn');
-function updateDir(){ const back=timeDir<0;
+function updateDir(){ const back=timeDir<0, t=(typeof tr==='function')?tr():null;
   revBtn.classList.toggle('on',back); revBtn.textContent=back?"⏩":"⏪";
-  revBtn.title=back?"Time is running backwards — click to go forward":"Reverse the flow of time";
+  revBtn.title=(t&&t.tipRev)||"Reverse the flow of time";
   document.getElementById('jump').textContent=back?"⏮":"⏭";
-  document.getElementById('jump').title=back?"Jump to previous eclipse":"Jump to next eclipse";
-  const td=document.getElementById('tdir'); td.textContent=back?"◀ reverse":"▶ forward"; td.style.color=back?"var(--amber)":"var(--cyan)";
+  document.getElementById('jump').title=(t&&t.tipJump)||"Jump to next eclipse";
+  const td=document.getElementById('tdir'); td.textContent=back?((t&&t.rev)||"◀ reverse"):((t&&t.fwd)||"▶ forward"); td.style.color=back?"var(--amber)":"var(--cyan)";
 }
 revBtn.onclick=()=>{ timeDir=-timeDir; if(!playing){ playing=true; playBtn.textContent="⏸"; } updateDir(); };
 document.getElementById('jump').onclick=()=>{
@@ -1841,7 +1836,7 @@ canvas.addEventListener('pointerup',e=>{
    TOTALITY PATH (全食帶) + SAROS CYCLE explorer
    ============================================================ */
 const mapEl=document.getElementById('map'), mCv=document.getElementById('mapCanvas'), mxc=mCv.getContext('2d');
-let mapActive=false, sarosHist=[], sarosMember=0;
+let mapActive=false, mapPath=null;
 const projX=(lon,W)=>(lon+180)/360*W, projY=(lat,H)=>(90-lat)/180*H;
 
 function drawPathOn(pts,color,width,alpha,W,H){
@@ -1876,48 +1871,21 @@ function drawMap(){
   if(observer){ const ox=projX(observer.lon,W), oy=projY(observer.lat,H);   // your chosen site
     mxc.strokeStyle="#ff5a4d"; mxc.lineWidth=2; mxc.beginPath(); mxc.moveTo(ox-7,oy); mxc.lineTo(ox+7,oy); mxc.moveTo(ox,oy-7); mxc.lineTo(ox,oy+7); mxc.stroke();
     mxc.beginPath(); mxc.arc(ox,oy,9,0,TAU); mxc.stroke(); }
-  // Saros series: older members faint (watch them march west), current bright
-  sarosHist.forEach((h,i)=>{ const cur=i===sarosHist.length-1, age=sarosHist.length-1-i;
-    if(cur){ drawPathOn(h.path,"rgba(255,180,90,0.5)",9,0.5,W,H); drawPathOn(h.path,"#ffd14d",4,1,W,H); }
-    else drawPathOn(h.path,"#ff8a4d",2.5,Math.max(0.12,0.55-age*0.09),W,H); });
+  if(mapPath){ drawPathOn(mapPath,"rgba(255,180,90,0.5)",9,0.5,W,H); drawPathOn(mapPath,"#ffd14d",4,1,W,H); }   // totality band
 }
-function recordSaros(){
-  const a=angles(state), path=totalityPath();
-  const lon0 = path.length ? path[path.length>>1][0] : null;
-  const ty = solarType(a)||'Partial';
-  sarosHist.push({path, gamma:a.lat, date:fmtDate(dayToDate(simDay)), member:sarosMember, type:ty, lon0});
-  if(sarosHist.length>6) sarosHist.shift();
-  // readouts
-  const per=measureSaros().saros;
-  let shift='—';
-  if(sarosHist.length>=2){ const A=sarosHist[sarosHist.length-2].lon0, B=lon0;
-    if(A!=null&&B!=null){ const d=wrapLon(B-A); shift=(d>0?'+':'')+d.toFixed(0)+'°'; } }
-  document.getElementById('mapType').textContent='· '+ty+' (solar)';
-  document.querySelector('#sarosInfo .sr1').textContent=`Saros member ${sarosMember} · ${fmtDate(dayToDate(simDay))} · ${ty}`;
-  document.querySelector('#sarosInfo .sr2').textContent=`γ ${a.lat.toFixed(2)}°  ·  Δlon/Saros ${shift}  ·  engine Saros ≈ ${per.toFixed(0)}d (real 6585)`;
-  drawMap();
-}
-function startSaros(){
-  sarosHist=[]; sarosMember=0;
+function showTotality(){
   const l=forecastSim(state,16); const e=l.find(x=>x.eType==='solar'&&x.type!=='Partial')||l.find(x=>x.eType==='solar');
   if(e) gotoDay(e.day);
-  recordSaros();
-}
-function sarosStep(dir){
-  const target=simDay + dir*SAROS_REAL;            // one Saros (same eclipse season)
-  gotoDay(target-70);
-  const cands=forecastSim(state,12).filter(x=>x.eType==='solar');
-  let best=null,bd=1e9; for(const c of cands){ const dd=Math.abs(c.day-target); if(dd<bd){bd=dd;best=c;} } // nearest the target
-  if(best) gotoDay(best.day);
-  sarosMember+=dir; recordSaros();
+  const ty = solarType(angles(state))||'Partial';
+  mapPath = totalityPath();
+  document.getElementById('mapType').textContent='· '+ty+' · '+fmtDate(dayToDate(simDay));
+  drawMap();
 }
 function openMap(){ if(mapActive) return; mapActive=true; playing=false; playBtn.textContent="▶";
-  mapEl.classList.add('show'); startSaros(); }
+  mapEl.classList.add('show'); showTotality(); }
 function closeMap(){ mapActive=false; mapEl.classList.remove('show'); }
 document.getElementById('mapBtn').onclick=openMap;
 document.getElementById('exitMap').onclick=closeMap;
-document.getElementById('sarosNext').onclick=()=>sarosStep(1);
-document.getElementById('sarosPrev').onclick=()=>sarosStep(-1);
 addEventListener('resize',()=>{ if(mapActive) drawMap(); });
 
 /* ---- Best viewing panel (opposition / greatest elongation) ---- */
@@ -1990,9 +1958,9 @@ async function loadNews(){
   try{
     const [launches, arts]=await Promise.all([ getLaunches(), getArticles(newsFilter) ]);
     let html='';
-    if(launches.length){ html+='<div class="nsub">🚀 Upcoming launches</div>'+launches.map(l=>
+    if(launches.length){ html+=`<div class="nsub">${tr().launches}</div>`+launches.map(l=>
       `<div class="launch"><div class="ld">${escH(l.rel)}</div><div class="lm"><div class="lt">${escH(l.name)}</div><div class="ls">${escH(l.prov)} · ${escH(l.when)}</div></div></div>`).join(''); }
-    html+='<div class="nsub">🛰 Latest news'+(newsFilter?' · '+escH(newsFilter):'')+'</div>';
+    html+=`<div class="nsub">${tr().latest}`+(newsFilter?' · '+escH(newsFilter):'')+'</div>';
     html+= arts.length ? arts.map(a=>
       `<a class="nart" href="${escH(a.url)}" target="_blank" rel="noopener noreferrer"><div class="nt">${escH(a.title)}</div><div class="nmeta"><span class="nsrc">${escH(a.site)}</span> · ${escH(relTime(a.date))}</div></a>`).join('')
       : '<div class="nstate">No recent articles for this filter.</div>';
@@ -2017,21 +1985,21 @@ const ABOUT_I18N={
       [`⏪ · ⏭`,`Run time backwards, or jump to the next / previous eclipse.`],
       [`🪐 planet`,`Tap any planet for an astronomer's fact sheet — data, atmosphere, missions.`],
       [`🌍 Earth`,`Open a 3D globe, pick an observing site, then watch the eclipse from there.`],
-      [`🗺 map`,`The totality path on a rotating Earth, plus the Saros cycle.`],
+      [`🗺 map`,`The totality path of an eclipse drawn on a rotating Earth.`],
       [`🔭 events`,`Best viewing — oppositions, greatest elongations, conjunctions.`],
       [`📡 feed`,`Live space news &amp; launches, and profile dossiers for the space agencies.`],
       [`▶ watch`,`Short official SpaceX clips, played inline (also on the left dock).`]],
     hHow:`How it works`, how:[
       `<b>Real gravity, not faked orbits.</b> Every body moves under F = G·m₁·m₂/r², integrated with a symplectic velocity-Verlet method (energy holds to ~10⁻¹⁵). Ellipses, periods, the Moon's regressing nodes and eclipse seasons all <b>emerge</b> from the physics.`,
-      `<b>Eclipses from geometry.</b> Each step the Moon's elongation and ecliptic latitude are measured and classified Total / Annular / Hybrid / Partial (lunar via Earth's shadow cone). The umbra is projected onto a spinning, tilted Earth to draw the totality path, and the Saros cycle steps a series forward.`,
+      `<b>Eclipses from geometry.</b> Each step the Moon's elongation and ecliptic latitude are measured and classified Total / Annular / Hybrid / Partial (lunar via Earth's shadow cone). The umbra is projected onto a spinning, tilted Earth to draw the totality path.`,
       `<b>From your spot.</b> Choose a site and the maths turns topocentric — real lunar parallax and the local horizon decide what that place actually sees, and "the next eclipse visible from here".`],
     hArch:`Architecture`, arch:[
       [`Engine`,`Vanilla-JS N-body integrator (units: AU · days · solar masses).`],
       [`3D`,`Three.js / WebGL — textured planets, a Sun shader, bloom, the globe &amp; planet viewers.`],
-      [`2D`,`Canvas — the ground-level eclipse view and the totality / Saros map.`],
+      [`2D`,`Canvas — the ground-level eclipse view and the totality-path map.`],
       [`Live data`,`News (Spaceflight News API), launches (Launch Library 2), imagery from NASA &amp; Wikimedia.`],
       [`Build`,`A single self-contained index.html — no framework, no bundler.`]],
-    note:`Honest notes: the simulation's geography is self-consistent <b>model coordinates</b>, not real-world map positions; the engine's Saros period is close to but not exactly the real 6585.32-day value (a point-mass model isn't a JPL-grade ephemeris); agency profiles are curated to early 2026, while the news &amp; launch feeds are live.`,
+    note:`Honest notes: the simulation's geography is self-consistent <b>model coordinates</b>, not real-world map positions; a point-mass model isn't a JPL-grade ephemeris, so long-range eclipse dates drift from reality; agency profiles are curated to early 2026, while the news &amp; launch feeds are live.`,
     start:`Start exploring →` },
   zh:{ eyebrow:`◈ 使用導覽`, title:`太陽系引擎`,
     lede:`一個即時的<b>重力 N 體模擬</b>，每顆行星的軌道都由基本物理推導而來——再用這些運動<b>推算日食與月食</b>，並讓你站在地面觀看食的全程。`,
@@ -2041,21 +2009,21 @@ const ABOUT_I18N={
       [`⏪ · ⏭`,`讓時間倒流，或跳到下一次／上一次食。`],
       [`🪐 行星`,`點任一行星，看天文學家級的資料卡——數據、大氣、探測任務。`],
       [`🌍 地球`,`開啟 3D 地球儀、選擇觀測地點，再從該地觀看日食。`],
-      [`🗺 地圖`,`旋轉地球上的全食帶，以及沙羅週期。`],
+      [`🗺 地圖`,`在自轉的地球上畫出一次食的全食帶。`],
       [`🔭 天象`,`最佳觀測——衝、大距、合。`],
       [`📡 動態`,`即時太空新聞與發射，以及各太空機構的檔案。`],
       [`▶ 影片`,`官方 SpaceX 短片，直接內嵌播放（左側也有）。`]],
     hHow:`運作原理`, how:[
       `<b>真實重力，不是假軌道。</b>每個天體都遵循 F = G·m₁·m₂/r²，以辛普力克的速度-Verlet 積分法推進（能量守恆達 ~10⁻¹⁵）。橢圓軌道、週期、月球交點的退行與「食季」全都從物理中自然湧現。`,
-      `<b>由幾何推算食。</b>每一步都量測月球的距角與黃緯，分類為全食／環食／混合食／偏食（月食則由地球陰影錐判定）。本影投影到自轉且傾斜的地球上畫出全食帶，沙羅週期則逐次推演一系列食。`,
+      `<b>由幾何推算食。</b>每一步都量測月球的距角與黃緯，分類為全食／環食／混合食／偏食（月食則由地球陰影錐判定）。本影投影到自轉且傾斜的地球上畫出全食帶。`,
       `<b>從你的所在地看。</b>選定地點後，計算改為地表（地平）模式——真實的月球視差與當地地平線決定該地實際看得到什麼，以及「從這裡看得到的下一次食」。`],
     hArch:`系統架構`, arch:[
       [`引擎`,`純 JavaScript 的 N 體積分器（單位：AU · 日 · 太陽質量）。`],
       [`3D`,`Three.js／WebGL——貼圖行星、太陽著色器、輝光、地球儀與行星檢視器。`],
-      [`2D`,`Canvas——地面日食畫面與全食帶／沙羅地圖。`],
+      [`2D`,`Canvas——地面日食畫面與全食帶地圖。`],
       [`即時資料`,`新聞（Spaceflight News API）、發射（Launch Library 2）、影像來自 NASA 與維基共享資源。`],
       [`建置`,`單一自包含的 index.html——無框架、無打包工具。`]],
-    note:`誠實說明：模擬中的地理是自洽的<b>模型座標</b>，並非真實地圖位置；引擎的沙羅週期接近但不完全等於真實的 6585.32 天（點質量模型並非 JPL 等級星曆）；機構檔案整理至 2026 年初，新聞與發射則為即時。`,
+    note:`誠實說明：模擬中的地理是自洽的<b>模型座標</b>，並非真實地圖位置；點質量模型並非 JPL 等級星曆，長期的食日期會與真實逐漸偏離；機構檔案整理至 2026 年初，新聞與發射則為即時。`,
     start:`開始探索 →` },
   ja:{ eyebrow:`◈ フィールドガイド`, title:`太陽系エンジン`,
     lede:`リアルタイムの<b>重力 N 体シミュレーション</b>。すべての惑星軌道を基礎物理から導き、その運動から<b>日食・月食を予測</b>し、地上から食の一部始終を眺められます。`,
@@ -2065,21 +2033,21 @@ const ABOUT_I18N={
       [`⏪ · ⏭`,`時間を逆行、または次／前の食へジャンプ。`],
       [`🪐 惑星`,`惑星をタップで天文学者級のデータカード——諸元・大気・探査ミッション。`],
       [`🌍 地球`,`3D 地球儀を開いて観測地点を選び、その場所から日食を観賞。`],
-      [`🗺 地図`,`自転する地球上の皆既帯と、サロス周期。`],
+      [`🗺 地図`,`自転する地球上に描く、一回の食の皆既帯。`],
       [`🔭 天象`,`観測の好機——衝・最大離角・合。`],
       [`📡 フィード`,`最新の宇宙ニュースと打ち上げ、各宇宙機関のプロフィール。`],
       [`▶ 動画`,`SpaceX 公式ショート動画をその場で再生（左のドックにも）。`]],
     hHow:`しくみ`, how:[
       `<b>本物の重力、見せかけの軌道ではありません。</b>各天体は F = G·m₁·m₂/r² に従い、シンプレクティックな速度ベルレ法で積分（エネルギー保存は ~10⁻¹⁵）。楕円軌道・周期・月の交点の後退・食の季節は、すべて物理から自然に現れます。`,
-      `<b>幾何から食を導く。</b>毎ステップ、月の離角と黄緯を測り、皆既／金環／ハイブリッド／部分に分類（月食は地球の影錐で判定）。本影を自転・傾斜した地球に投影して皆既帯を描き、サロス周期で一連の食を進めます。`,
+      `<b>幾何から食を導く。</b>毎ステップ、月の離角と黄緯を測り、皆既／金環／ハイブリッド／部分に分類（月食は地球の影錐で判定）。本影を自転・傾斜した地球に投影して皆既帯を描きます。`,
       `<b>あなたの場所から。</b>地点を選ぶと計算は地平座標に切り替わり、実際の月の視差と地平線が、その場所で何が見えるか、そして「ここから見える次の食」を決めます。`],
     hArch:`アーキテクチャ`, arch:[
       [`エンジン`,`バニラ JS の N 体積分器（単位：AU・日・太陽質量）。`],
       [`3D`,`Three.js／WebGL——テクスチャ惑星、太陽シェーダー、ブルーム、地球儀と惑星ビューア。`],
-      [`2D`,`Canvas——地上の日食ビューと皆既帯／サロス地図。`],
+      [`2D`,`Canvas——地上の日食ビューと皆既帯マップ。`],
       [`ライブデータ`,`ニュース（Spaceflight News API）、打ち上げ（Launch Library 2）、画像は NASA とウィキメディア。`],
       [`ビルド`,`単一完結の index.html——フレームワークもバンドラーもなし。`]],
-    note:`正直な注記：シミュレーション内の地理は自己整合的な<b>モデル座標</b>で、実地図の位置ではありません。エンジンのサロス周期は実際の 6585.32 日に近いものの完全一致ではありません（質点モデルは JPL 級の天体暦ではない）。機関プロフィールは 2026 年初頭時点、ニュースと打ち上げはライブです。`,
+    note:`正直な注記：シミュレーション内の地理は自己整合的な<b>モデル座標</b>で、実地図の位置ではありません。質点モデルは JPL 級の天体暦ではないため、長期の食の日付は実際から徐々にずれます。機関プロフィールは 2026 年初頭時点、ニュースと打ち上げはライブです。`,
     start:`探索をはじめる →` },
 };
 let aboutLang=(()=>{ try{ return localStorage.getItem('sse_lang')||'en'; }catch(e){ return 'en'; } })();
@@ -2094,14 +2062,68 @@ function renderAbout(lang){ const t=ABOUT_I18N[lang]||ABOUT_I18N.en; aboutLang=l
   document.getElementById('aboutStart').onclick=closeAbout;
   try{ localStorage.setItem('sse_lang',lang); }catch(e){}
 }
+/* ---- site-wide UI strings (EN · 中文 · 日本語) ---- */
+const UI={
+  en:{ sub:`Orbits integrated from gravity in real time — used to predict eclipses.<br>N-body · F = G·m₁·m₂/r²`,
+    hint:`drag = orbit · scroll = zoom · tap a planet → facts · 🌍 Earth = site · 🗺 totality path · 🔭 events · 📡 live space news`,
+    tipRev:`Reverse the flow of time`, tipPlay:`Play / Pause (space)`, tipJump:`Jump to next eclipse`, tipEarth:`Pick your observing site · enter Earth`,
+    tipMap:`Totality path map`, tipView:`Sky events — opposition, elongation, conjunctions`, tipNews:`Live space news, launches & agencies`, tipAbout:`About — what this is & how to use it`,
+    daysPerSec:`days/s`, fwd:`▶ forward`, rev:`◀ reverse`, exit:`Exit`, surfaceExit:`Exit to orbit`, mapTitle:`Totality path`,
+    globeHead:`🌍 Pick your observing site`, globeHint:`drag to rotate · tap the globe to drop a pin · or pick a continent, then a city`,
+    useObs:`Observe from here →`, bestObs:`Best spot (geocentric)`, obsNone:`No site selected`, obsTap:`Tap the globe to choose`,
+    skyHead:`🔭 Sky events`, newsTitle:`📡 Mission Feed`, tabFeed:`📡 Live feed`, tabWatch:`▶ Watch`, tabAgencies:`🏛 Agencies`,
+    launches:`🚀 Upcoming launches`, latest:`🛰 Latest news`, watchTitle:`🚀 SpaceX · short clips`, watchDock:`▶ Watch · SpaceX`, agenciesList:`🏛 Agencies & companies`,
+    pCompare:`Compared to Earth (×)`, pData:`Physical & orbital data`, pAtmos:`Atmosphere`, pFeatures:`Notable features`, pExpl:`🛰 Exploration`,
+    fromSun:i=>`${['1st','2nd','3rd','4th','5th','6th','7th','8th'][i]} planet from the Sun`, pOf:n=>`Planet ${n} of 8`,
+    agMilestones:`Milestones`, agPics:`In pictures · history & missions`, agPrograms:`Active programs`, agSite:`Official site ↗`, agStatusR:`ARCHIVE · LIVE LINK`,
+    prev:`‹ Prev`, next:`Next ›`, watchYT:`Watch on YouTube ↗` },
+  zh:{ sub:`行星軌道由重力即時積分得出，用以推算日食。<br>N 體重力 · F = G·m₁·m₂/r²`,
+    hint:`拖曳 = 旋轉 · 滾輪 = 縮放 · 點行星 → 資料 · 🌍 地球 = 觀測點 · 🗺 全食帶 · 🔭 天象 · 📡 太空新聞`,
+    tipRev:`讓時間倒流`, tipPlay:`播放／暫停（空白鍵）`, tipJump:`跳到下一次食`, tipEarth:`選擇觀測地點 · 進入地球`,
+    tipMap:`全食帶地圖`, tipView:`天象——衝、大距、合`, tipNews:`即時太空新聞、發射與機構`, tipAbout:`關於——這是什麼、怎麼用`,
+    daysPerSec:`天/秒`, fwd:`▶ 順向`, rev:`◀ 逆向`, exit:`離開`, surfaceExit:`離開地球`, mapTitle:`全食帶`,
+    globeHead:`🌍 選擇觀測地點`, globeHint:`拖曳旋轉 · 點地球放置標記 · 或先選洲、再選城市`,
+    useObs:`從這裡觀測 →`, bestObs:`最佳地點（地心）`, obsNone:`尚未選擇地點`, obsTap:`點地球選擇地點`,
+    skyHead:`🔭 天象`, newsTitle:`📡 任務動態`, tabFeed:`📡 即時動態`, tabWatch:`▶ 影片`, tabAgencies:`🏛 機構`,
+    launches:`🚀 即將發射`, latest:`🛰 最新消息`, watchTitle:`🚀 SpaceX · 短片`, watchDock:`▶ 影片 · SpaceX`, agenciesList:`🏛 機構與公司`,
+    pCompare:`與地球相比（×）`, pData:`物理與軌道數據`, pAtmos:`大氣`, pFeatures:`重點特徵`, pExpl:`🛰 探索`,
+    fromSun:i=>`距太陽第 ${i+1} 顆行星`, pOf:n=>`第 ${n} 顆行星／共 8 顆`,
+    agMilestones:`里程碑`, agPics:`影像 · 歷史與任務`, agPrograms:`進行中的計畫`, agSite:`官方網站 ↗`, agStatusR:`檔案 · 即時連線`,
+    prev:`‹ 上一個`, next:`下一個 ›`, watchYT:`在 YouTube 觀看 ↗` },
+  ja:{ sub:`重力からリアルタイムに軌道を積分し、食を予測。<br>N 体 · F = G·m₁·m₂/r²`,
+    hint:`ドラッグ = 回転 · スクロール = ズーム · 惑星をタップ → データ · 🌍 地球 = 観測地 · 🗺 皆既帯 · 🔭 天象 · 📡 宇宙ニュース`,
+    tipRev:`時間を逆行`, tipPlay:`再生／一時停止（スペース）`, tipJump:`次の食へジャンプ`, tipEarth:`観測地点を選ぶ · 地球へ`,
+    tipMap:`皆既帯マップ`, tipView:`天象——衝・最大離角・合`, tipNews:`宇宙ニュース・打ち上げ・機関`, tipAbout:`概要——これは何か・使い方`,
+    daysPerSec:`日/秒`, fwd:`▶ 順方向`, rev:`◀ 逆方向`, exit:`閉じる`, surfaceExit:`軌道へ戻る`, mapTitle:`皆既帯`,
+    globeHead:`🌍 観測地点を選ぶ`, globeHint:`ドラッグで回転 · 地球をタップでピン · または大陸→都市を選択`,
+    useObs:`ここから観測 →`, bestObs:`最適地点（地心）`, obsNone:`地点未選択`, obsTap:`地球をタップして選択`,
+    skyHead:`🔭 天象`, newsTitle:`📡 ミッションフィード`, tabFeed:`📡 ライブ`, tabWatch:`▶ 動画`, tabAgencies:`🏛 機関`,
+    launches:`🚀 今後の打ち上げ`, latest:`🛰 最新ニュース`, watchTitle:`🚀 SpaceX · ショート動画`, watchDock:`▶ 動画 · SpaceX`, agenciesList:`🏛 機関・企業`,
+    pCompare:`地球との比較（×）`, pData:`物理・軌道データ`, pAtmos:`大気`, pFeatures:`主な特徴`, pExpl:`🛰 探査`,
+    fromSun:i=>`太陽から ${i+1} 番目の惑星`, pOf:n=>`惑星 ${n} ／ 8`,
+    agMilestones:`マイルストーン`, agPics:`画像 · 歴史とミッション`, agPrograms:`進行中の計画`, agSite:`公式サイト ↗`, agStatusR:`アーカイブ · ライブ`,
+    prev:`‹ 前へ`, next:`次へ ›`, watchYT:`YouTube で見る ↗` },
+};
+function tr(){ return UI[aboutLang]||UI.en; }
+function applyLang(lang){ if(!UI[lang]) lang='en'; aboutLang=lang; const t=UI[lang];
+  document.documentElement.lang = lang==='zh'?'zh-Hant':lang;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ const v=t[el.dataset.i18n]; if(v!=null) el.innerHTML=v; });
+  document.querySelectorAll('[data-i18n-title]').forEach(el=>{ const v=t[el.dataset.i18nTitle]; if(v!=null) el.title=v; });
+  renderAbout(lang);
+  if(typeof updateDir==='function') updateDir();
+  if(typeof obsReadout==='function') obsReadout();
+  if(typeof renderWatchDock==='function') renderWatchDock();
+  if(typeof newsActive!=='undefined' && newsActive){ const ot=document.querySelector('#newsTabs button.on')?.dataset.tab;
+    if(ot==='watch') renderWatchGrid(); else if(ot==='agencies') renderAgencyGrid(); else { renderNewsFilters(); loadNews(); } }
+  if(typeof planetActive!=='undefined' && planetActive) showFacts(pCurrent);
+  try{ localStorage.setItem('sse_lang',lang); }catch(e){}
+}
 function openAbout(){ document.getElementById('about').classList.add('show'); }
 function closeAbout(){ document.getElementById('about').classList.remove('show'); }
 document.getElementById('aboutBtn').onclick=openAbout;
 document.getElementById('aboutClose').onclick=closeAbout;
-document.querySelectorAll('#aboutLang button').forEach(b=>b.onclick=()=>renderAbout(b.dataset.lang));
+document.querySelectorAll('#aboutLang button').forEach(b=>b.onclick=()=>applyLang(b.dataset.lang));
 document.getElementById('about').addEventListener('click',e=>{ if(e.target.id==='about') closeAbout(); });
-renderAbout(aboutLang);
-try{ if(!localStorage.getItem('sse_seen_about')){ setTimeout(openAbout,1500); localStorage.setItem('sse_seen_about','1'); } }catch(e){}
 
 /* ---- space agencies & companies — cinematic profile dossiers ---- */
 const AGENCIES=[
@@ -2180,12 +2202,12 @@ const AGENCY_MEDIA={   // logo + captioned historical gallery (Wikimedia Commons
 let agIdx=0;
 const AG_SHORT={NASA:"NASA",ESA:"ESA",SPX:"SpaceX","РК":"Roscosmos",CNSA:"CNSA",JAXA:"JAXA",ISRO:"ISRO",BO:"Blue Origin",RL:"Rocket Lab"};
 function renderWatchDock(){ const d=document.getElementById('watchDock'); if(!d) return;   // left-edge quick-play video dock (thumbnails, scroll for more)
-  d.innerHTML='<div class="agDockH">▶ Watch · SpaceX</div>'+SPACEX_VIDS.map((v,i)=>
+  d.innerHTML=`<div class="agDockH">${tr().watchDock}</div>`+SPACEX_VIDS.map((v,i)=>
     `<button class="dockItem" data-i="${i}"><span class="dockThumb"><img loading="lazy" src="https://i.ytimg.com/vi/${v.id}/mqdefault.jpg" alt=""><span class="dockPlay">▶</span><span class="dockDur">${escH(v.d)}</span></span><span class="dockT">${escH(v.t)}</span></button>`).join('');
   d.querySelectorAll('.dockItem').forEach(b=>b.onclick=()=>openVid(SPACEX_VIDS[+b.dataset.i].id));
 }
 function renderAgencyGrid(){ const list=document.getElementById('newsList');
-  list.innerHTML='<div class="nsub">🏛 Agencies &amp; companies</div>'+AGENCIES.map((a,i)=>
+  list.innerHTML=`<div class="nsub">${tr().agenciesList}</div>`+AGENCIES.map((a,i)=>
     `<div class="agcard" data-i="${i}"><div class="agc-em" style="background:${a.accent}">${escH(a.acro)}</div>`+
     `<div><div class="agc-n">${escH(a.flag)} ${escH(a.name)}</div><div class="agc-s">${escH(a.type)} · est. ${escH(a.founded)} · ${escH(a.hq)}</div></div>`+
     `<div class="agc-go">›</div></div>`).join('')+
@@ -2236,7 +2258,7 @@ const SPACEX_VIDS=[
   {id:"BYTE4MtR0do",t:"Fram2 · Polar Orbit Views",d:"2:42"},
 ];
 function renderWatchGrid(){ const list=document.getElementById('newsList');
-  list.innerHTML='<div class="nsub">🚀 SpaceX · short clips · humanity\'s progress in space</div><div class="watchGrid">'+
+  list.innerHTML=`<div class="nsub">${tr().watchTitle}</div><div class="watchGrid">`+
     SPACEX_VIDS.map((v,i)=>`<div class="vcard" data-i="${i}"><div class="vthumb"><img loading="lazy" src="https://i.ytimg.com/vi/${v.id}/hqdefault.jpg" alt=""><div class="vplay">▶</div><div class="vdur">${escH(v.d)}</div></div><div class="vt">${escH(v.t)}</div></div>`).join('')+
     '</div><div class="nnote">Official @SpaceX videos, played here via YouTube · every clip is under 10 minutes.</div>';
   list.querySelectorAll('.vcard').forEach(c=>c.onclick=()=>openVid(SPACEX_VIDS[+c.dataset.i].id));
@@ -2363,7 +2385,7 @@ function renderGlobe(){
   if(gTween){ gCam.position.lerp(gTween,0.16); if(gCam.position.distanceTo(gTween)<0.02){ gCam.position.copy(gTween); gTween=null; } }  // smooth fly-to picked city
   gClouds.rotation.y+=0.0004; gControls.update(); gRenderer.render(gScene,gCam); gUpdateLabels();
 }
-function obsReadout(){ document.getElementById('obsReadout').textContent = gpin?`Site ${fmtLat(gpin.lat)} ${fmtLon(gpin.lon)}`:'Tap the globe to choose'; }
+function obsReadout(){ document.getElementById('obsReadout').textContent = gpin?`${fmtLat(gpin.lat)} ${fmtLon(gpin.lon)}`:tr().obsTap; }
 function updateBadge(){ const el=document.getElementById('obsBadge');
   if(observer){ el.textContent=`📍 Observing from ${fmtLat(observer.lat)} ${fmtLon(observer.lon)}`; el.classList.add('show'); } else el.classList.remove('show'); }
 function openGlobe(){ if(globeActive) return; globeActive=true; playing=false; playBtn.textContent="▶";
@@ -2511,19 +2533,19 @@ function showFacts(name){
   const idx=PLANETS.findIndex(p=>p.name===name)+1, pi=document.getElementById('planetInfo');
   pi.style.setProperty('--accent',f.accent);
   pi.style.background=`radial-gradient(132% 96% at 36% 26%, ${hexA(f.accent,0.17)}, #070a12 52%, #020308 100%)`;
-  const c=f.cmp, cmpHtml=cmpRow('Diameter',c.dia)+cmpRow('Mass',c.mass)+cmpRow('Gravity',c.grav)+cmpRow('Day',c.day)+cmpRow('Year',c.year);
-  el.innerHTML=`<div class="peyebrow">${ordinal(idx)} planet from the Sun</div>
+  const c=f.cmp, t=tr(), cmpHtml=cmpRow('Diameter',c.dia)+cmpRow('Mass',c.mass)+cmpRow('Gravity',c.grav)+cmpRow('Day',c.day)+cmpRow('Year',c.year);
+  el.innerHTML=`<div class="peyebrow">${t.fromSun(idx-1)}</div>
     <h2>${name}<span class="psym">${f.sym}</span></h2>
     <div class="ptag">${f.cls}</div>
     <div class="pintro">${f.intro}</div>
-    <h3>Compared to Earth (×)</h3><div class="cmp">${cmpHtml}</div>
-    <h3>Physical &amp; orbital data</h3>
+    <h3>${t.pCompare}</h3><div class="cmp">${cmpHtml}</div>
+    <h3>${t.pData}</h3>
     <div class="pspec">${f.stats.map(s=>`<div class="specRow"><span class="k">${s[0]}</span><span class="v">${s[1]}</span></div>`).join('')}</div>
-    <div class="patmos"><span class="k">Atmosphere</span><span class="v">${f.atmos}</span></div>
-    <h3>Notable features</h3><ul>${f.features.map(x=>`<li>${x}</li>`).join('')}</ul>
-    <div class="pnasa"><div class="k">◈ Exploration</div><div class="v">${f.exploration}</div></div>
+    <div class="patmos"><span class="k">${t.pAtmos}</span><span class="v">${f.atmos}</span></div>
+    <h3>${t.pFeatures}</h3><ul>${f.features.map(x=>`<li>${x}</li>`).join('')}</ul>
+    <div class="pnasa"><div class="k">${t.pExpl}</div><div class="v">${f.exploration}</div></div>
     <div class="pnote">${PLANET_NOTE}</div>`;
-  document.getElementById('pTitle').textContent=`${name} · Planet ${idx} of 8`;
+  document.getElementById('pTitle').textContent=`${name} · ${t.pOf(idx)}`;
 }
 function goPlanet(name){ if(!PLANET_FACTS[name]) name="Earth"; if(!piInit) initPlanet(); buildPlanet(name); showFacts(name); pResize(); }
 function openPlanetInfo(name){ if(globeActive) closeGlobe(); planetActive=true; playing=false; playBtn.textContent="▶";
@@ -2593,6 +2615,8 @@ window.__sim={ rev:THREE.REVISION,
       if(pm<0&&m>=0&&Math.abs(pm)<1){ sid=t; break;} pm=m; }
     return {siderealMonth:+sid.toFixed(3)}; } };
 
+applyLang(aboutLang);                          // localise the whole UI to the saved/default language
+setTimeout(openAbout, 650);                     // show the guide every time the site opens (pick a language to read in)
 requestAnimationFrame(tick);
 </script>
 </body>
