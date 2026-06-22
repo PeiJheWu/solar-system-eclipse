@@ -649,13 +649,12 @@
   </div>
   <button id="jump" title="Jump to next eclipse">⏭</button>
   <button id="earthBtn" data-i18n-title="tipEarth" title="Pick your observing site · enter Earth">🌍</button>
-  <button id="mapBtn" data-i18n-title="tipMap" title="Totality path map">🗺</button>
   <button id="viewBtn" data-i18n-title="tipView" title="Sky events">🔭</button>
   <button id="newsBtn" data-i18n-title="tipNews" title="Live space news, launches & agencies">📡</button>
   <button id="aboutBtn" data-i18n-title="tipAbout" title="About — what this is & how to use it">ℹ</button>
 </div>
 
-<div class="hint" data-i18n="hint">drag = orbit · scroll = zoom · tap a planet → facts · 🌍 Earth = site · 🗺 totality path · 🔭 events · 📡 live space news</div>
+<div class="hint" data-i18n="hint">drag = orbit · scroll = zoom · tap a planet → facts · 🌍 Earth = site · 🔭 events · 📡 live space news</div>
 <div id="obsBadge"></div>
 <div id="watchDock"></div>
 
@@ -663,12 +662,6 @@
   <canvas id="surfaceCanvas"></canvas>
   <div id="surfaceInfo"><div class="k" id="sKind">—</div><div class="c" id="sCov">—</div></div>
   <button id="exitEarth">✕ <span data-i18n="surfaceExit">Exit to orbit</span></button>
-</div>
-
-<div id="map">
-  <div id="mapTitle"><span data-i18n="mapTitle">Totality path</span><span id="mapType"></span></div>
-  <canvas id="mapCanvas"></canvas>
-  <button id="exitMap">✕ <span data-i18n="exit">Exit</span></button>
 </div>
 
 <div id="viewing">
@@ -1832,62 +1825,6 @@ canvas.addEventListener('pointerup',e=>{
     if(o){ if(o===bodies[2]) openGlobe(); else openPlanetInfo(o.userData.p.name); } }
 });
 
-/* ============================================================
-   TOTALITY PATH (全食帶) + SAROS CYCLE explorer
-   ============================================================ */
-const mapEl=document.getElementById('map'), mCv=document.getElementById('mapCanvas'), mxc=mCv.getContext('2d');
-let mapActive=false, mapPath=null;
-const projX=(lon,W)=>(lon+180)/360*W, projY=(lat,H)=>(90-lat)/180*H;
-
-function drawPathOn(pts,color,width,alpha,W,H){
-  if(!pts||pts.length<2) return;
-  mxc.strokeStyle=color; mxc.lineWidth=width; mxc.globalAlpha=alpha; mxc.lineJoin="round"; mxc.beginPath();
-  let px=null;
-  for(let k=0;k<pts.length;k++){ const x=projX(pts[k][0],W), y=projY(pts[k][1],H);
-    if(k===0||px===null||Math.abs(x-px)>W*0.5){ mxc.stroke(); mxc.beginPath(); mxc.moveTo(x,y); } else mxc.lineTo(x,y);
-    px=x; }
-  mxc.stroke(); mxc.globalAlpha=1;
-}
-function drawMap(){
-  const dpr=Math.min(devicePixelRatio||1,2), W=mCv.clientWidth, H=mCv.clientHeight;
-  if(mCv.width!==(W*dpr|0)){ mCv.width=W*dpr; mCv.height=H*dpr; mxc.setTransform(dpr,0,0,dpr,0,0); }
-  mxc.clearRect(0,0,W,H); mxc.fillStyle="#070b16"; mxc.fillRect(0,0,W,H);
-  // day / night shading (coarse) from the Sun direction
-  const sd=sunDirOf(state), cols=64, rows=32;
-  for(let i=0;i<cols;i++) for(let j=0;j<rows;j++){
-    const lon=-180+(i+0.5)/cols*360, lat=90-(j+0.5)/rows*180, d=dirOf(lat,lon,simDay);
-    const lit=d[0]*sd[0]+d[1]*sd[1]+d[2]*sd[2];
-    if(lit>0){ mxc.fillStyle=`rgba(64,104,150,${0.05+0.11*lit})`; mxc.fillRect(i/cols*W-0.5,j/rows*H-0.5,W/cols+1,H/rows+1); }
-  }
-  // graticule
-  mxc.strokeStyle="rgba(120,150,200,.12)"; mxc.lineWidth=1;
-  for(let lon=-180;lon<=180;lon+=30){ const x=projX(lon,W); mxc.beginPath(); mxc.moveTo(x,0); mxc.lineTo(x,H); mxc.stroke(); }
-  for(let lat=-60;lat<=60;lat+=30){ const y=projY(lat,H); mxc.beginPath(); mxc.moveTo(0,y); mxc.lineTo(W,y); mxc.stroke(); }
-  mxc.strokeStyle="rgba(140,170,210,.22)"; mxc.beginPath(); mxc.moveTo(0,H/2); mxc.lineTo(W,H/2); mxc.stroke(); // equator
-  // sub-solar point
-  const ss=subSolar(state,simDay), sx0=projX(ss.lon,W), sy0=projY(ss.lat,H);
-  mxc.fillStyle="rgba(255,220,120,.95)"; mxc.beginPath(); mxc.arc(sx0,sy0,4,0,TAU); mxc.fill();
-  mxc.strokeStyle="rgba(255,220,120,.4)"; mxc.lineWidth=1; mxc.beginPath(); mxc.arc(sx0,sy0,10,0,TAU); mxc.stroke();
-  if(observer){ const ox=projX(observer.lon,W), oy=projY(observer.lat,H);   // your chosen site
-    mxc.strokeStyle="#ff5a4d"; mxc.lineWidth=2; mxc.beginPath(); mxc.moveTo(ox-7,oy); mxc.lineTo(ox+7,oy); mxc.moveTo(ox,oy-7); mxc.lineTo(ox,oy+7); mxc.stroke();
-    mxc.beginPath(); mxc.arc(ox,oy,9,0,TAU); mxc.stroke(); }
-  if(mapPath){ drawPathOn(mapPath,"rgba(255,180,90,0.5)",9,0.5,W,H); drawPathOn(mapPath,"#ffd14d",4,1,W,H); }   // totality band
-}
-function showTotality(){
-  const l=forecastSim(state,16); const e=l.find(x=>x.eType==='solar'&&x.type!=='Partial')||l.find(x=>x.eType==='solar');
-  if(e) gotoDay(e.day);
-  const ty = solarType(angles(state))||'Partial';
-  mapPath = totalityPath();
-  document.getElementById('mapType').textContent='· '+ty+' · '+fmtDate(dayToDate(simDay));
-  drawMap();
-}
-function openMap(){ if(mapActive) return; mapActive=true; playing=false; playBtn.textContent="▶";
-  mapEl.classList.add('show'); showTotality(); }
-function closeMap(){ mapActive=false; mapEl.classList.remove('show'); }
-document.getElementById('mapBtn').onclick=openMap;
-document.getElementById('exitMap').onclick=closeMap;
-addEventListener('resize',()=>{ if(mapActive) drawMap(); });
-
 /* ---- Best viewing panel (opposition / greatest elongation) ---- */
 const viewEl=document.getElementById('viewing'), viewList=document.getElementById('viewList');
 const hex6=c=>'#'+('00000'+c.toString(16)).slice(-6);
@@ -1985,18 +1922,17 @@ const ABOUT_I18N={
       [`⏪ · ⏭`,`Run time backwards, or jump to the next / previous eclipse.`],
       [`🪐 planet`,`Tap any planet for an astronomer's fact sheet — data, atmosphere, missions.`],
       [`🌍 Earth`,`Open a 3D globe, pick an observing site, then watch the eclipse from there.`],
-      [`🗺 map`,`The totality path of an eclipse drawn on a rotating Earth.`],
       [`🔭 events`,`Best viewing — oppositions, greatest elongations, conjunctions.`],
       [`📡 feed`,`Live space news &amp; launches, and profile dossiers for the space agencies.`],
       [`▶ watch`,`Short official SpaceX clips, played inline (also on the left dock).`]],
     hHow:`How it works`, how:[
       `<b>Real gravity, not faked orbits.</b> Every body moves under F = G·m₁·m₂/r², integrated with a symplectic velocity-Verlet method (energy holds to ~10⁻¹⁵). Ellipses, periods, the Moon's regressing nodes and eclipse seasons all <b>emerge</b> from the physics.`,
-      `<b>Eclipses from geometry.</b> Each step the Moon's elongation and ecliptic latitude are measured and classified Total / Annular / Hybrid / Partial (lunar via Earth's shadow cone). The umbra is projected onto a spinning, tilted Earth to draw the totality path.`,
+      `<b>Eclipses from geometry.</b> Each step the Moon's elongation and ecliptic latitude are measured and classified Total / Annular / Hybrid / Partial (lunar via Earth's shadow cone).`,
       `<b>From your spot.</b> Choose a site and the maths turns topocentric — real lunar parallax and the local horizon decide what that place actually sees, and "the next eclipse visible from here".`],
     hArch:`Architecture`, arch:[
       [`Engine`,`Vanilla-JS N-body integrator (units: AU · days · solar masses).`],
       [`3D`,`Three.js / WebGL — textured planets, a Sun shader, bloom, the globe &amp; planet viewers.`],
-      [`2D`,`Canvas — the ground-level eclipse view and the totality-path map.`],
+      [`2D`,`Canvas — the ground-level eclipse (surface) view.`],
       [`Live data`,`News (Spaceflight News API), launches (Launch Library 2), imagery from NASA &amp; Wikimedia.`],
       [`Build`,`A single self-contained index.html — no framework, no bundler.`]],
     note:`Honest notes: the simulation's geography is self-consistent <b>model coordinates</b>, not real-world map positions; a point-mass model isn't a JPL-grade ephemeris, so long-range eclipse dates drift from reality; agency profiles are curated to early 2026, while the news &amp; launch feeds are live.`,
@@ -2009,18 +1945,17 @@ const ABOUT_I18N={
       [`⏪ · ⏭`,`讓時間倒流，或跳到下一次／上一次食。`],
       [`🪐 行星`,`點任一行星，看天文學家級的資料卡——數據、大氣、探測任務。`],
       [`🌍 地球`,`開啟 3D 地球儀、選擇觀測地點，再從該地觀看日食。`],
-      [`🗺 地圖`,`在自轉的地球上畫出一次食的全食帶。`],
       [`🔭 天象`,`最佳觀測——衝、大距、合。`],
       [`📡 動態`,`即時太空新聞與發射，以及各太空機構的檔案。`],
       [`▶ 影片`,`官方 SpaceX 短片，直接內嵌播放（左側也有）。`]],
     hHow:`運作原理`, how:[
       `<b>真實重力，不是假軌道。</b>每個天體都遵循 F = G·m₁·m₂/r²，以辛普力克的速度-Verlet 積分法推進（能量守恆達 ~10⁻¹⁵）。橢圓軌道、週期、月球交點的退行與「食季」全都從物理中自然湧現。`,
-      `<b>由幾何推算食。</b>每一步都量測月球的距角與黃緯，分類為全食／環食／混合食／偏食（月食則由地球陰影錐判定）。本影投影到自轉且傾斜的地球上畫出全食帶。`,
+      `<b>由幾何推算食。</b>每一步都量測月球的距角與黃緯，分類為全食／環食／混合食／偏食（月食則由地球陰影錐判定）。`,
       `<b>從你的所在地看。</b>選定地點後，計算改為地表（地平）模式——真實的月球視差與當地地平線決定該地實際看得到什麼，以及「從這裡看得到的下一次食」。`],
     hArch:`系統架構`, arch:[
       [`引擎`,`純 JavaScript 的 N 體積分器（單位：AU · 日 · 太陽質量）。`],
       [`3D`,`Three.js／WebGL——貼圖行星、太陽著色器、輝光、地球儀與行星檢視器。`],
-      [`2D`,`Canvas——地面日食畫面與全食帶地圖。`],
+      [`2D`,`Canvas——地面日食（地表）畫面。`],
       [`即時資料`,`新聞（Spaceflight News API）、發射（Launch Library 2）、影像來自 NASA 與維基共享資源。`],
       [`建置`,`單一自包含的 index.html——無框架、無打包工具。`]],
     note:`誠實說明：模擬中的地理是自洽的<b>模型座標</b>，並非真實地圖位置；點質量模型並非 JPL 等級星曆，長期的食日期會與真實逐漸偏離；機構檔案整理至 2026 年初，新聞與發射則為即時。`,
@@ -2033,18 +1968,17 @@ const ABOUT_I18N={
       [`⏪ · ⏭`,`時間を逆行、または次／前の食へジャンプ。`],
       [`🪐 惑星`,`惑星をタップで天文学者級のデータカード——諸元・大気・探査ミッション。`],
       [`🌍 地球`,`3D 地球儀を開いて観測地点を選び、その場所から日食を観賞。`],
-      [`🗺 地図`,`自転する地球上に描く、一回の食の皆既帯。`],
       [`🔭 天象`,`観測の好機——衝・最大離角・合。`],
       [`📡 フィード`,`最新の宇宙ニュースと打ち上げ、各宇宙機関のプロフィール。`],
       [`▶ 動画`,`SpaceX 公式ショート動画をその場で再生（左のドックにも）。`]],
     hHow:`しくみ`, how:[
       `<b>本物の重力、見せかけの軌道ではありません。</b>各天体は F = G·m₁·m₂/r² に従い、シンプレクティックな速度ベルレ法で積分（エネルギー保存は ~10⁻¹⁵）。楕円軌道・周期・月の交点の後退・食の季節は、すべて物理から自然に現れます。`,
-      `<b>幾何から食を導く。</b>毎ステップ、月の離角と黄緯を測り、皆既／金環／ハイブリッド／部分に分類（月食は地球の影錐で判定）。本影を自転・傾斜した地球に投影して皆既帯を描きます。`,
+      `<b>幾何から食を導く。</b>毎ステップ、月の離角と黄緯を測り、皆既／金環／ハイブリッド／部分に分類（月食は地球の影錐で判定）。`,
       `<b>あなたの場所から。</b>地点を選ぶと計算は地平座標に切り替わり、実際の月の視差と地平線が、その場所で何が見えるか、そして「ここから見える次の食」を決めます。`],
     hArch:`アーキテクチャ`, arch:[
       [`エンジン`,`バニラ JS の N 体積分器（単位：AU・日・太陽質量）。`],
       [`3D`,`Three.js／WebGL——テクスチャ惑星、太陽シェーダー、ブルーム、地球儀と惑星ビューア。`],
-      [`2D`,`Canvas——地上の日食ビューと皆既帯マップ。`],
+      [`2D`,`Canvas——地上の日食（地表）ビュー。`],
       [`ライブデータ`,`ニュース（Spaceflight News API）、打ち上げ（Launch Library 2）、画像は NASA とウィキメディア。`],
       [`ビルド`,`単一完結の index.html——フレームワークもバンドラーもなし。`]],
     note:`正直な注記：シミュレーション内の地理は自己整合的な<b>モデル座標</b>で、実地図の位置ではありません。質点モデルは JPL 級の天体暦ではないため、長期の食の日付は実際から徐々にずれます。機関プロフィールは 2026 年初頭時点、ニュースと打ち上げはライブです。`,
@@ -2065,7 +1999,7 @@ function renderAbout(lang){ const t=ABOUT_I18N[lang]||ABOUT_I18N.en; aboutLang=l
 /* ---- site-wide UI strings (EN · 中文 · 日本語) ---- */
 const UI={
   en:{ sub:`Orbits integrated from gravity in real time — used to predict eclipses.<br>N-body · F = G·m₁·m₂/r²`,
-    hint:`drag = orbit · scroll = zoom · tap a planet → facts · 🌍 Earth = site · 🗺 totality path · 🔭 events · 📡 live space news`,
+    hint:`drag = orbit · scroll = zoom · tap a planet → facts · 🌍 Earth = site · 🔭 events · 📡 live space news`,
     tipRev:`Reverse the flow of time`, tipPlay:`Play / Pause (space)`, tipJump:`Jump to next eclipse`, tipEarth:`Pick your observing site · enter Earth`,
     tipMap:`Totality path map`, tipView:`Sky events — opposition, elongation, conjunctions`, tipNews:`Live space news, launches & agencies`, tipAbout:`About — what this is & how to use it`,
     daysPerSec:`days/s`, fwd:`▶ forward`, rev:`◀ reverse`, exit:`Exit`, surfaceExit:`Exit to orbit`, mapTitle:`Totality path`,
@@ -2078,7 +2012,7 @@ const UI={
     agMilestones:`Milestones`, agPics:`In pictures · history & missions`, agPrograms:`Active programs`, agSite:`Official site ↗`, agStatusR:`ARCHIVE · LIVE LINK`,
     prev:`‹ Prev`, next:`Next ›`, watchYT:`Watch on YouTube ↗` },
   zh:{ sub:`行星軌道由重力即時積分得出，用以推算日食。<br>N 體重力 · F = G·m₁·m₂/r²`,
-    hint:`拖曳 = 旋轉 · 滾輪 = 縮放 · 點行星 → 資料 · 🌍 地球 = 觀測點 · 🗺 全食帶 · 🔭 天象 · 📡 太空新聞`,
+    hint:`拖曳 = 旋轉 · 滾輪 = 縮放 · 點行星 → 資料 · 🌍 地球 = 觀測點 · 🔭 天象 · 📡 太空新聞`,
     tipRev:`讓時間倒流`, tipPlay:`播放／暫停（空白鍵）`, tipJump:`跳到下一次食`, tipEarth:`選擇觀測地點 · 進入地球`,
     tipMap:`全食帶地圖`, tipView:`天象——衝、大距、合`, tipNews:`即時太空新聞、發射與機構`, tipAbout:`關於——這是什麼、怎麼用`,
     daysPerSec:`天/秒`, fwd:`▶ 順向`, rev:`◀ 逆向`, exit:`離開`, surfaceExit:`離開地球`, mapTitle:`全食帶`,
@@ -2091,7 +2025,7 @@ const UI={
     agMilestones:`里程碑`, agPics:`影像 · 歷史與任務`, agPrograms:`進行中的計畫`, agSite:`官方網站 ↗`, agStatusR:`檔案 · 即時連線`,
     prev:`‹ 上一個`, next:`下一個 ›`, watchYT:`在 YouTube 觀看 ↗` },
   ja:{ sub:`重力からリアルタイムに軌道を積分し、食を予測。<br>N 体 · F = G·m₁·m₂/r²`,
-    hint:`ドラッグ = 回転 · スクロール = ズーム · 惑星をタップ → データ · 🌍 地球 = 観測地 · 🗺 皆既帯 · 🔭 天象 · 📡 宇宙ニュース`,
+    hint:`ドラッグ = 回転 · スクロール = ズーム · 惑星をタップ → データ · 🌍 地球 = 観測地 · 🔭 天象 · 📡 宇宙ニュース`,
     tipRev:`時間を逆行`, tipPlay:`再生／一時停止（スペース）`, tipJump:`次の食へジャンプ`, tipEarth:`観測地点を選ぶ · 地球へ`,
     tipMap:`皆既帯マップ`, tipView:`天象——衝・最大離角・合`, tipNews:`宇宙ニュース・打ち上げ・機関`, tipAbout:`概要——これは何か・使い方`,
     daysPerSec:`日/秒`, fwd:`▶ 順方向`, rev:`◀ 逆方向`, exit:`閉じる`, surfaceExit:`軌道へ戻る`, mapTitle:`皆既帯`,
